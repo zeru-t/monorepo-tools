@@ -16,15 +16,29 @@
 	"categories": [
 		"Other"
 	],
-	"activationEvents": [],
+	"activationEvents": [
+		"onStartupFinished"
+	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "monorepo-tools.helloWorld",
-				"title": "Hello World"
+		"configuration": {
+			"title": "Monorepo Tools",
+			"properties": {
+				"MonorepoTools.annotations": {
+					"order": 1,
+					"markdownDescription": "Any entry that matches a script in the *package.json* file will be displayed as an inline file annotation.\n* `Item`: name of the script.\n* `Value`: description of the script",
+					"type": "object",
+					"additionalProperties": {
+						"type": "string"
+					},
+					"default": {
+						"dev": "run application in dev mode",
+						"build": "build application for production mode",
+						"lint": "run linter on application source code"
+					}
+				}
 			}
-		]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "pnpm run compile",
