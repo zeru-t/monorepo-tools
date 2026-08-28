@@ -35,6 +35,12 @@
 						"dev": "run application in dev mode",
 						"build": "build application for production mode"
 					}
+				},
+				"MonorepoTools.hideAnnotations": {
+					"order": 1,
+					"markdownDescription": "Hide *package.json* file annotations",
+					"type": "boolean",
+					"default": false
 				}
 			}
 		}
