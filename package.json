@@ -41,6 +41,17 @@
 					"markdownDescription": "Hide *package.json* file annotations",
 					"type": "boolean",
 					"default": false
+				},
+				"MonorepoTools.packageManager": {
+					"type": "string",
+					"enum": [
+						"npm",
+						"pnpm",
+						"bun"
+					],
+					"default": "npm",
+					"order": 1,
+					"markdownDescription": "Package Manager to use for commands."
 				}
 			}
 		}

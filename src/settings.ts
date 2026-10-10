@@ -5,12 +5,14 @@ type Annotation = Record<string, string>;
 interface Settings {
 	annotations: Annotation;
 	hideAnnotations: boolean;
+	packageManager: string;
 }
 
 function getSettings() {
 	return {
 		annotations: getSetting('annotations'),
-		hideAnnotations: getSetting('hideAnnotations')
+		hideAnnotations: getSetting('hideAnnotations'),
+		packageManager: getSetting('packageManager')
 	} as Settings;
 }
 
