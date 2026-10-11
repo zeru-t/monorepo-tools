@@ -1,21 +1,21 @@
-import { ExtensionContext, languages, commands as VSCodeCommands, EventEmitter, CodeLensProvider, tasks, Task, TaskScope, ShellExecution } from 'vscode';
+import { ExtensionContext, languages, commands as VSCodeCommands, EventEmitter, CodeLensProvider, tasks, Task, TaskScope, ShellExecution  } from 'vscode';
 
 import { AnnotationProvider, AnnotationCommandsProvider } from './annotations/provider';
 import { commands } from './commands';
 import { updateSetting, getSettings } from './settings';
-import { StatusBarItems } from './statusBarItem';
+import { StatusBar } from './statusBarItem';
 
 
-export function activate({ subscriptions }: ExtensionContext) {
+export function activate(extensionContext: ExtensionContext) {
 
+	const { subscriptions, workspaceState } = extensionContext;
 	const updateAnnotationProvider = new EventEmitter<void>();
 
 	createCommands();
 
 	createCodeLenses();
 
-	const statusBarItems = new StatusBarItems(subscriptions);
-
+	const statusBar = new StatusBar(extensionContext);
 
 	function createCodeLenses() {
 		createCodeLens(new AnnotationCommandsProvider());
@@ -32,6 +32,7 @@ export function activate({ subscriptions }: ExtensionContext) {
 		createCommand(commands.toggleHideAnnotations, toggleHideAnnotations);
 		createCommand(commands.changePackageManager, updatePackageManager);
 		createCommand(commands.installPackages, runCommand('install'));
+		createCommand(commands.setApp, setApp);
 
 		createCommand(commands.doNothing, () => null);
 
@@ -53,7 +54,12 @@ export function activate({ subscriptions }: ExtensionContext) {
 			if (newPackageManager === packageManager)
 				return;
 			await updateSetting('packageManager', newPackageManager);
-			statusBarItems.packageManager.update();
+			await statusBar.packageManager.update();
+		}
+
+		async function setApp(newApp: string) {
+			await workspaceState.update('app', newApp);
+			await statusBar.updateAppStatusBarItems();
 		}
 
 		function runCommand(command: string) {
