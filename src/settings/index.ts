@@ -1,14 +1,7 @@
 import { workspace } from 'vscode';
 
+import { Settings } from '../models';
 
-type Annotation = Record<string, string>;
-interface Settings {
-	annotations: Annotation;
-	hideAnnotations: boolean;
-	packageManager: string;
-	runScript: string;
-	buildScript: string;
-}
 
 function getSettings() {
 	return {
