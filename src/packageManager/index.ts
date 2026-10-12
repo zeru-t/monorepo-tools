@@ -1,6 +1,6 @@
 import { ExtensionContext, IconPath, QuickPickItem, Uri } from 'vscode';
 
-import { getSettings } from './settings';
+import { getSettings } from '../settings';
 
 
 class PackageMangerItem implements QuickPickItem {

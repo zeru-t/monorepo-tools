@@ -1,68 +1,11 @@
-import { StatusBarAlignment, window, MarkdownString, StatusBarItem as VSCodeStatusBarItem, workspace, ExtensionContext } from 'vscode';
+import { MarkdownString, workspace, ExtensionContext } from 'vscode';
 
-import { commands } from './commands';
-import { getSettings } from './settings';
-import { Subscriptions } from './models/subscription';
-import { StatusBarItemProps, StatusBarItemUpdate, UpdateStatusBarItem } from './models/statusBar';
+import { commands } from '../commands';
+import { StatusBarItemUpdate } from '../models';
+import { getSettings } from '../settings';
+import { StatusBarItem } from './item';
+import { StatusBarSpacer } from './spacer';
 
-
-class StatusBarItem {
-
-	public statusBarItem: VSCodeStatusBarItem;
-	public updateStatusBarItem?: UpdateStatusBarItem;
-
-	constructor({ priority, text = '', icon, tooltip, command, updateStatusBarItem }: StatusBarItemProps) {
-		this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 4000 - priority);
-
-		this.statusBarItem.name = 'Monorepo Tools';
-		this.statusBarItem.text = `${icon ? `$(${icon})` : ''}${text ? ` ${text}` : ''}`;
-		this.statusBarItem.tooltip = tooltip;
-
-		if (command)
-			this.statusBarItem.command = command;
-
-		if (priority < 4) {
-			this.statusBarItem.color = '#d2b5dd';
-		}
-
-		this.updateStatusBarItem = updateStatusBarItem;
-
-		this.statusBarItem.show();
-	}
-
-	public initialize(subscriptions: Subscriptions) {
-		subscriptions.push(this.statusBarItem);
-		this.update();
-	}
-
-	public async update() {
-		if (!this.updateStatusBarItem)
-			return;
-		const updateResponse = await this.updateStatusBarItem();
-		if (!updateResponse)
-			return;
-		const { text, icon, tooltip } = updateResponse;
-		if (text || icon) {
-			const regex = new RegExp(/^(\$\((.*)\)) (.*)$/);
-			const [currentIcon, currentText] = regex.exec(this.statusBarItem.text)!.slice(-2);
-			const newIcon = icon || currentIcon;
-			const newText = text || currentText;
-			this.statusBarItem.text = `${newIcon ? `$(${newIcon})` : ''} ${newText ? ` ${newText}` : ''}`;
-		}
-		if (tooltip)
-			this.statusBarItem.tooltip = tooltip;
-	}
-
-}
-
-class StatusBarSpacer {
-	constructor(subscriptions: Subscriptions, priority: number, numSpaces = 1) {
-		for (let i = 0; i < numSpaces; i++) {
-			const spacer = new StatusBarItem({ text: ' ', priority });
-			spacer.initialize(subscriptions);
-		}
-	}
-}
 
 class StatusBar {
 
@@ -174,4 +117,4 @@ class StatusBar {
 	}
 }
 
-export { StatusBar, StatusBarItem };
+export { StatusBar };

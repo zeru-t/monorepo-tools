@@ -1,8 +1,6 @@
-import { CodeLensProvider, Event, EventEmitter, TextDocument } from 'vscode';
+import { CodeLensProvider, Event, EventEmitter, TextDocument, CodeLens as VSCodeLens, ExtensionContext, languages, window } from 'vscode';
 
 import { getSettings } from '../settings';
-
-import { CodeLens } from './codeLens';
 
 
 class AnnotationProvider implements CodeLensProvider {
@@ -64,4 +62,16 @@ class AnnotationCommandsProvider implements CodeLensProvider {
 	}
 }
 
-export { AnnotationProvider, AnnotationCommandsProvider };
+class CodeLens extends VSCodeLens {
+	constructor(lineNumber: number, title: string, tooltipText = '', command = '', ...args: string[]) {
+		const { range } = window.activeTextEditor!.document.lineAt(lineNumber);
+		const tooltip = `Click here to ${tooltipText} annotations`;
+		super(range, { title, tooltip, command, arguments: args });
+	}
+}
+
+function createCodeLenses({ subscriptions }: ExtensionContext, ...providers: CodeLensProvider[]) {
+	providers.forEach(provider => subscriptions.push(languages.registerCodeLensProvider({ language: 'json', pattern: '**/package.json' }, provider)));
+}
+
+export { AnnotationProvider, AnnotationCommandsProvider, createCodeLenses };

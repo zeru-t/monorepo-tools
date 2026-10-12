@@ -1,10 +1,10 @@
-import { ExtensionContext, languages, commands as VSCodeCommands, EventEmitter, CodeLensProvider, tasks, Task, TaskScope, ShellExecution, window, QuickPickOptions } from 'vscode';
+import { ExtensionContext, commands as VSCodeCommands, EventEmitter, QuickPickOptions, window, ShellExecution, TaskScope, Task, tasks } from 'vscode';
 
-import { AnnotationProvider, AnnotationCommandsProvider } from './annotations/provider';
+import { AnnotationProvider, AnnotationCommandsProvider, createCodeLenses } from './annotations';
 import { commands } from './commands';
-import { PackageMangerItems } from './packageManagerItem';
-import { updateSetting, getSettings } from './settings';
-import { StatusBar } from './statusBarItem';
+import { PackageMangerItems } from './packageManager';
+import { getSettings, updateSetting } from './settings';
+import { StatusBar } from './statusBar';
 
 
 export function activate(extensionContext: ExtensionContext) {
@@ -15,23 +15,13 @@ export function activate(extensionContext: ExtensionContext) {
 
 	createCommands();
 
-	createCodeLenses();
+	createCodeLenses(extensionContext, new AnnotationCommandsProvider(), new AnnotationProvider(updateAnnotationProvider));
 
 	const statusBar = new StatusBar(extensionContext);
 
 
-	function createCodeLenses() {
-		createCodeLens(new AnnotationCommandsProvider());
-		createCodeLens(new AnnotationProvider(updateAnnotationProvider));
-
-
-		function createCodeLens(provider: CodeLensProvider) {
-			const codeLens = languages.registerCodeLensProvider({ language: 'json', pattern: '**/package.json' }, provider);
-			subscriptions.push(codeLens);
-		}
-	}
-
 	function createCommands() {
+
 		createCommand(commands.toggleHideAnnotations, toggleHideAnnotations);
 		createCommand(commands.changePackageManager, changePackageManager);
 		createCommand(commands.installPackages, runCommand('install'));
