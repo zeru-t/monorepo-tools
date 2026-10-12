@@ -1,7 +1,8 @@
-import { ExtensionContext, languages, commands as VSCodeCommands, EventEmitter, CodeLensProvider, tasks, Task, TaskScope, ShellExecution  } from 'vscode';
+import { ExtensionContext, languages, commands as VSCodeCommands, EventEmitter, CodeLensProvider, tasks, Task, TaskScope, ShellExecution, window, QuickPickOptions } from 'vscode';
 
 import { AnnotationProvider, AnnotationCommandsProvider } from './annotations/provider';
 import { commands } from './commands';
+import { PackageMangerItems } from './packageManagerItem';
 import { updateSetting, getSettings } from './settings';
 import { StatusBar } from './statusBarItem';
 
@@ -9,6 +10,7 @@ import { StatusBar } from './statusBarItem';
 export function activate(extensionContext: ExtensionContext) {
 
 	const { subscriptions, workspaceState } = extensionContext;
+
 	const updateAnnotationProvider = new EventEmitter<void>();
 
 	createCommands();
@@ -16,6 +18,7 @@ export function activate(extensionContext: ExtensionContext) {
 	createCodeLenses();
 
 	const statusBar = new StatusBar(extensionContext);
+
 
 	function createCodeLenses() {
 		createCodeLens(new AnnotationCommandsProvider());
@@ -30,9 +33,11 @@ export function activate(extensionContext: ExtensionContext) {
 
 	function createCommands() {
 		createCommand(commands.toggleHideAnnotations, toggleHideAnnotations);
-		createCommand(commands.changePackageManager, updatePackageManager);
+		createCommand(commands.changePackageManager, changePackageManager);
 		createCommand(commands.installPackages, runCommand('install'));
 		createCommand(commands.setApp, setApp);
+		createCommand(commands.runApp, runAppCommand('runScriptName'));
+		createCommand(commands.buildApp, runAppCommand('buildScriptName'));
 
 		createCommand(commands.doNothing, () => null);
 
@@ -45,14 +50,24 @@ export function activate(extensionContext: ExtensionContext) {
 
 		async function toggleHideAnnotations() {
 			const { hideAnnotations } = getSettings();
-			await updateSetting('hideAnnotations', !hideAnnotations);
+			await updateSetting('annotations.hide', !hideAnnotations);
 			updateAnnotationProvider.fire();
 		}
 
-		async function updatePackageManager(newPackageManager: string) {
-			const { packageManager } = getSettings();
-			if (newPackageManager === packageManager)
+		async function changePackageManager() {
+			const { items } = new PackageMangerItems(extensionContext);
+			const quickPickOptions = {
+				matchOnDescription: true,
+				matchOnDetail: true,
+				placeHolder: 'Select a Package Manager to switch to...'
+			} as QuickPickOptions;
+
+			const picked = await window.showQuickPick(items, quickPickOptions);
+
+			const newPackageManager = picked?.label.trim();
+			if (!newPackageManager)
 				return;
+
 			await updateSetting('packageManager', newPackageManager);
 			await statusBar.packageManager.update();
 		}
@@ -73,6 +88,13 @@ export function activate(extensionContext: ExtensionContext) {
 				const task = new Task(taskDefinition, TaskScope.Workspace, command, 'MonorepoTools', execution);
 				tasks.executeTask(task);
 			};
+		}
+
+		function runAppCommand(commandName: keyof ReturnType<typeof getSettings>) {
+			const appName = workspaceState.get<string>('app');
+			const settings = getSettings();
+			const command = settings[commandName];
+			return runCommand(`run ${appName ? `${command}:${appName}` : command}`);
 		}
 	}
 }

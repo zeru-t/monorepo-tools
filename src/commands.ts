@@ -4,6 +4,8 @@ const commands = {
 	changePackageManager: 'MonorepoTools.changePackageManager',
 	installPackages: 'MonorepoTools.installPackages',
 	setApp: 'MonorepoTools.setApp',
+	runApp: 'MonorepoTools.runApp',
+	buildApp: 'MonorepoTools.buildApp',
 
 	doNothing: 'MonorepoTools.clickPackageManager'
 };

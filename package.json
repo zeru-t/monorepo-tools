@@ -21,40 +21,63 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"configuration": {
-			"title": "Monorepo Tools",
-			"properties": {
-				"MonorepoTools.annotations": {
-					"order": 1,
-					"markdownDescription": "Any entry that matches a script in the *package.json* file will be displayed as an inline file annotation.\n* `Item`: name of the script.\n* `Value`: description of the script",
-					"type": "object",
-					"additionalProperties": {
-						"type": "string"
+		"configuration": [
+			{
+				"title": "Package Manager",
+				"order": 1,
+				"type": "object",
+				"properties": {
+					"MonorepoTools.packageManager": {
+						"type": "string",
+						"enum": [
+							"npm",
+							"pnpm",
+							"bun"
+						],
+						"default": "npm",
+						"order": 1,
+						"markdownDescription": "Package Manager to use for commands."
 					},
-					"default": {
-						"dev": "run application in dev mode",
-						"build": "build application for production mode"
+					"MonorepoTools.runScriptName": {
+						"type": "string",
+						"default": "dev",
+						"order": 2,
+						"markdownDescription": "Script to use when running applications locally."
+					},
+					"MonorepoTools.buildScriptName": {
+						"type": "string",
+						"default": "build",
+						"order": 3,
+						"markdownDescription": "Script to use when building applications."
 					}
-				},
-				"MonorepoTools.hideAnnotations": {
-					"order": 1,
-					"markdownDescription": "Hide *package.json* file annotations",
-					"type": "boolean",
-					"default": false
-				},
-				"MonorepoTools.packageManager": {
-					"type": "string",
-					"enum": [
-						"npm",
-						"pnpm",
-						"bun"
-					],
-					"default": "npm",
-					"order": 1,
-					"markdownDescription": "Package Manager to use for commands."
+				}
+			},
+			{
+				"title": "Annotations",
+				"order": 2,
+				"type": "object",
+				"properties": {
+					"MonorepoTools.annotations": {
+						"order": 1,
+						"markdownDescription": "Any entry that matches a script in the *package.json* file will be displayed as an inline file annotation.\n* `Item`: name of the script.\n* `Value`: description of the script",
+						"type": "object",
+						"additionalProperties": {
+							"type": "string"
+						},
+						"default": {
+							"dev": "run application in dev mode",
+							"build": "build application for production mode"
+						}
+					},
+					"MonorepoTools.hideAnnotations": {
+						"order": 2,
+						"markdownDescription": "Hide *package.json* file annotations",
+						"type": "boolean",
+						"default": false
+					}
 				}
 			}
-		}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "pnpm run compile",

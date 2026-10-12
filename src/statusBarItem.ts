@@ -75,19 +75,22 @@ class StatusBar {
 
 	constructor({ subscriptions, workspaceState }: ExtensionContext) {
 
-		const currentApp = () => workspaceState.get<string>('app') ?? 'Select Current App';
+		const currentApp = () => workspaceState.get<string>('app');
 
-		this.apps = new StatusBarItem({ text: currentApp(), icon: 'project', tooltip: 'Apps', updateStatusBarItem: updateAppsStatusBarItem, priority: 1 });
-		this.runApp = new StatusBarItem({ icon: 'run', tooltip: `Run ${currentApp()}`, updateStatusBarItem: updateRunAppStatusBarItem, priority: 2 });
-		this.buildApp = new StatusBarItem({ icon: 'tools', tooltip: `Build ${currentApp()}`, updateStatusBarItem: updateBuildAppStatusBarItem, priority: 3 });
+		this.apps = new StatusBarItem({ text: currentApp() ?? 'Select Current App', icon: 'project', tooltip: 'Apps', updateStatusBarItem: updateAppsStatusBarItem, priority: 1 });
+		this.runApp = new StatusBarItem({ icon: 'run', tooltip: `Run ${currentApp() || workspace.name}`, command: commands.runApp, updateStatusBarItem: updateRunAppStatusBarItem, priority: 2 });
+		this.buildApp = new StatusBarItem({ icon: 'tools', tooltip: `Build ${currentApp() || workspace.name}`, command: commands.buildApp, updateStatusBarItem: updateBuildAppStatusBarItem, priority: 3 });
 
 		new StatusBarSpacer(subscriptions, 4, 2);
 
-		this.showTerminal = new StatusBarItem({ text: 'Terminal', icon: 'terminal-cmd', tooltip: 'Show Terminal', command: commands.showTerminal, priority: 5 });
-		this.packageManager = new StatusBarItem({ text: 'Switch Package Manger', icon: 'symbol-color', updateStatusBarItem: updatePackageManagerStatusBarItem, priority: 6 });
-		this.installPackages = new StatusBarItem({ text: 'Install Packages', icon: 'package', tooltip: 'Install All Packages', command: commands.installPackages, priority: 7 });
+		this.packageManager = new StatusBarItem({ text: 'Switch Package Manger', icon: 'symbol-color', tooltip: 'Select a Package Manager', command: commands.changePackageManager, updateStatusBarItem: updatePackageManagerStatusBarItem, priority: 5 });
+		this.installPackages = new StatusBarItem({ text: 'Install Packages', icon: 'package', tooltip: 'Install All Packages', command: commands.installPackages, priority: 6 });
 
-		new StatusBarSpacer(subscriptions, 10, 4);
+		new StatusBarSpacer(subscriptions, 7, 2);
+
+		this.showTerminal = new StatusBarItem({ text: 'Terminal', icon: 'terminal-cmd', tooltip: 'Show Terminal', command: commands.showTerminal, priority: 8 });
+
+		new StatusBarSpacer(subscriptions, 9, 4);
 
 		this.apps.initialize(subscriptions);
 		this.runApp.initialize(subscriptions);
@@ -98,31 +101,8 @@ class StatusBar {
 
 
 		function updatePackageManagerStatusBarItem() {
-
-			const { packageManager: currentPackageManager } = getSettings();
-
-			const tooltip = new MarkdownString('', true);
-			tooltip.supportHtml = true;
-			tooltip.isTrusted = true;
-			tooltip.appendMarkdown('<h2 align="center">Change Package Manager</h2>\n');
-			tooltip.appendMarkdown('<table width="100%" border="1"><tr>');
-			tooltip.appendMarkdown(`<td align="center">${getIcon('npm')}</td>`);
-			tooltip.appendMarkdown(`<td align="center">${getIcon('pnpm')}</td>`);
-			tooltip.appendMarkdown(`<td align="center">${getIcon('bun')}</td>`);
-			tooltip.appendMarkdown('</tr></table>');
-
-			return { tooltip } as StatusBarItemUpdate;
-
-
-			function getIcon(packageManager: string) {
-				const toolTip = `Switch to '${packageManager}'`;
-				const iconDir = 'https://raw.githubusercontent.com/zeru-t/package-manager-tools/refs/heads/main/icons';
-				const image = `<h1><img height="27" border="1" src="${iconDir}/${packageManager}.png" alt="${toolTip}" title="${toolTip}" /></h1>`;
-				const isCurrent = currentPackageManager === packageManager;
-				const name = isCurrent ? `<mark><b><i>&nbsp;${packageManager}&nbsp;</i></b></mark>` : packageManager;
-				const command = `(command:${commands.changePackageManager}?"${packageManager}" "${toolTip}")`;
-				return `\n\n### [${image}${name}]${command}\n`;
-			}
+			const { packageManager } = getSettings();
+			return { text: packageManager ?? 'Select a Package Manager' } as StatusBarItemUpdate;
 		}
 		async function updateAppsStatusBarItem() {
 
@@ -130,21 +110,27 @@ class StatusBar {
 			if (!root)
 				return;
 
-			const packageFiles = await workspace.findFiles('**/package.json', '**/node_modules/**');
-			const apps = packageFiles
+			const packageFiles = await workspace.findFiles('**/package.json', '{**/node_modules/**,**/.*}');
+			const apps = Object.entries(packageFiles
 				.map(file => file.path.replace(`${root}/`, '').replace(new RegExp('(/)?package.json', 'g'), ''))
 				.sort()
-				.reduce(reduceApps, {});
+				.reduce(reduceApps, {}));
 
 			const tooltip = new MarkdownString('', true);
 			tooltip.supportHtml = true;
 			tooltip.isTrusted = true;
-			tooltip.appendMarkdown('<h1>Change Current App</h1>\n');
-			tooltip.appendMarkdown(`<h2><div>${workspace.name}/</div>`);
-			Object.entries(apps).forEach(updateTooltip);
-			tooltip.appendMarkdown('</h2>');
 
-			return { tooltip, text: currentApp() } as StatusBarItemUpdate;
+			if (!apps.length) {
+				return { tooltip, text: workspace.name } as StatusBarItemUpdate;
+			}
+			else {
+				tooltip.appendMarkdown('<h1>Change Current App</h1>\n');
+				tooltip.appendMarkdown(`<h2><div>${workspace.name}/</div>`);
+				apps.forEach(updateTooltip);
+				tooltip.appendMarkdown('</h2>');
+
+				return { tooltip, text: currentApp() ?? 'Select Current App' } as StatusBarItemUpdate;
+			}
 
 
 			function reduceApps(allApps: Record<string, string[]>, app: string) {
@@ -168,10 +154,16 @@ class StatusBar {
 
 		}
 		function updateRunAppStatusBarItem() {
-			return { tooltip: `Run ${currentApp()}` } as StatusBarItemUpdate;
+			const tooltip = new MarkdownString(`Run <b><i>${currentApp() || workspace.name}</i></b>`, true);
+			tooltip.supportHtml = true;
+			tooltip.isTrusted = true;
+			return { tooltip } as StatusBarItemUpdate;
 		}
 		function updateBuildAppStatusBarItem() {
-			return { tooltip: `Build ${currentApp()}` } as StatusBarItemUpdate;
+			const tooltip = new MarkdownString(`Build <b><i>${currentApp() || workspace.name}</i></b>`, true);
+			tooltip.supportHtml = true;
+			tooltip.isTrusted = true;
+			return { tooltip } as StatusBarItemUpdate;
 		}
 	}
 
