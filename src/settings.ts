@@ -6,8 +6,8 @@ interface Settings {
 	annotations: Annotation;
 	hideAnnotations: boolean;
 	packageManager: string;
-	runScriptName: string;
-	buildScriptName: string;
+	runScript: string;
+	buildScript: string;
 }
 
 function getSettings() {
@@ -15,8 +15,8 @@ function getSettings() {
 		annotations: getSetting('annotations'),
 		hideAnnotations: getSetting('hideAnnotations'),
 		packageManager: getSetting('packageManager'),
-		runScriptName: getSetting('runScriptName'),
-		buildScriptName: getSetting('buildScriptName')
+		runScript: getSetting('runScriptName'),
+		buildScript: getSetting('buildScriptName')
 	} as Settings;
 }
 

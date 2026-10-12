@@ -36,8 +36,8 @@ export function activate(extensionContext: ExtensionContext) {
 		createCommand(commands.changePackageManager, changePackageManager);
 		createCommand(commands.installPackages, runCommand('install'));
 		createCommand(commands.setApp, setApp);
-		createCommand(commands.runApp, runAppCommand('runScriptName'));
-		createCommand(commands.buildApp, runAppCommand('buildScriptName'));
+		createCommand(commands.runApp, runScriptCommand('run'));
+		createCommand(commands.buildApp, runScriptCommand('build'));
 
 		createCommand(commands.doNothing, () => null);
 
@@ -90,10 +90,10 @@ export function activate(extensionContext: ExtensionContext) {
 			};
 		}
 
-		function runAppCommand(commandName: keyof ReturnType<typeof getSettings>) {
+		function runScriptCommand(commandName: 'run' | 'build') {
 			const appName = workspaceState.get<string>('app');
 			const settings = getSettings();
-			const command = settings[commandName];
+			const command = settings[`${commandName}Script`];
 			return runCommand(`run ${appName ? `${command}:${appName}` : command}`);
 		}
 	}
