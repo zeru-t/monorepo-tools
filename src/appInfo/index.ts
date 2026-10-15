@@ -1,5 +1,6 @@
-import { workspace } from 'vscode';
+import { Uri, workspace, TextDocument as VSCodeTextDocument } from 'vscode';
 import { appInfo, packageFile } from '../models';
+import { readFileSync } from 'fs';
 
 
 class AppInfo {
@@ -28,11 +29,12 @@ async function getAppInfo() {
 	const packagesFiles = await Promise.all(
 		packageFilePaths
 			.filter(({ path }) => path !== `${root}/package.json`)
-			.map(async ({ path }) => {
-				const doc = await workspace.openTextDocument(path);
+			.map(async (uri) => {
+				const doc = await TextDocument.open(uri);
+				const docText = await doc.getText();
 				return {
-					...JSON.parse(doc.getText()),
-					path: doc.uri.path
+					...JSON.parse(docText),
+					path: doc.path
 				} as packageFile;
 			})
 	);
@@ -59,5 +61,30 @@ async function getAppInfo() {
 		});
 }
 
+class TextDocument {
+
+	private _doc: VSCodeTextDocument;
+	private _getSavedText: (input?: NodeJS.ArrayBufferView<ArrayBufferLike>) => string;
+
+	private get _uri() { return this._doc.uri; }
+
+	public get path() { return this._uri.path; }
+
+	constructor(doc: VSCodeTextDocument) {
+		this._doc = doc;
+		const textDecoder = new TextDecoder();
+		this._getSavedText = () => textDecoder.decode(readFileSync(this._uri.fsPath));
+	}
+
+	public static async open(uri: Uri) {
+		return new TextDocument(await workspace.openTextDocument(uri.path));
+	}
+
+	public async getText() {
+		if (this._doc.isDirty)
+			return this._getSavedText();
+		return this._doc.getText();
+	}
+}
 
 export { AppInfo };

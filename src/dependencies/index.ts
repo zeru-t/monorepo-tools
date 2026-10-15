@@ -1,21 +1,27 @@
-import { TreeItemCollapsibleState, TreeDataProvider, TreeItem as VSCodeTreeItem, ThemeIcon, TreeItemLabel } from 'vscode';
+import { TreeItemCollapsibleState, TreeDataProvider, TreeItem as VSCodeTreeItem, ThemeIcon, EventEmitter, Event, ExtensionContext, Memento } from 'vscode';
 
 import { AppInfo } from '../appInfo';
 
 
 class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 
+	private _workspaceState: Memento;
 	private _appInfo: AppInfo;
+	private _onDidChangeTreeData = new EventEmitter<ChangeTreeData>();
 
-	constructor(appInfo: AppInfo) {
+	readonly onDidChangeTreeData: Event<ChangeTreeData>;
+
+	constructor({ workspaceState }: ExtensionContext, appInfo: AppInfo) {
+		this._workspaceState = workspaceState;
 		this._appInfo = appInfo;
+		this.onDidChangeTreeData = this._onDidChangeTreeData.event;
 	}
 
-	getTreeItem(element: TreeItem): TreeItem {
+	getTreeItem(element: TreeItem) {
 		return element;
 	}
 
-	getChildren(element?: TreeItem): TreeItem[] {
+	getChildren(element?: TreeItem) {
 		const { appInfo } = this._appInfo;
 
 		if (!element) {
@@ -25,7 +31,7 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 				.map((folder) => new TreeItem({ label: folder, collapsible: true }));
 		}
 
-		const app = appInfo.find(app => app.appName === element.label);
+		const app = appInfo.find(app => app.appName === element.id);
 		if (app) {
 			const { dependencies, devDependencies } = app;
 			return [
@@ -48,31 +54,46 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 			];
 		}
 
+		const currentApp = this._workspaceState.get<string>('app');
 		return appInfo
-			.filter(({ folder }) => folder === element.label)
+			.filter(({ folder }) => folder === element.id)
 			.map(({ appName, dependencies, devDependencies }) => {
 				const allDependencies = [...dependencies, ...devDependencies];
 				const hasDeps = !!allDependencies.length;
 				return new TreeItem({
 					label: appName,
+					highlight: appName === currentApp,
 					collapsible: hasDeps,
 					description: hasDeps ? undefined : '(no monorepo dependencies)'
 				});
 			});
 	}
 
+	refresh() {
+		return async () => {
+			await this._appInfo.refresh();
+			this._onDidChangeTreeData.fire();
+		};
+	}
 }
 
+type ChangeTreeData = TreeItem | undefined | null | void;
 interface TreeItemProps {
-	label: string | TreeItemLabel;
+	label: string;
+	highlight?: boolean;
 	collapsible?: boolean;
 	tooltip?: string;
 	icon?: string;
 	description?: string;
 }
 class TreeItem extends VSCodeTreeItem {
-	constructor({ label, collapsible, tooltip, icon, description }: TreeItemProps) {
+	public id: string;
+
+	constructor({ label, collapsible, tooltip, icon, description, highlight }: TreeItemProps) {
 		super(label, collapsible ? TreeItemCollapsibleState.Collapsed : TreeItemCollapsibleState.None);
+		this.id = label;
+		if (highlight)
+			this.label = { label, highlights: [[0, label.length]] };
 		this.tooltip = tooltip;
 		this.description = description;
 		if (icon)

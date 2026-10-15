@@ -92,13 +92,13 @@ class StatusBar {
 		}
 	}
 
-	public updateAppStatusBarItems() {
-		this.updateStatusBarItems('apps');
-		this.updateStatusBarItems('runApp');
-		this.updateStatusBarItems('buildApp');
+	public async updateAppStatusBarItems() {
+		await this.updateStatusBarItems('apps');
+		await this.updateStatusBarItems('runApp');
+		await this.updateStatusBarItems('buildApp');
 	}
 	public updateStatusBarItems(item: 'showTerminal' | 'packageManager' | 'installPackages' | 'apps' | 'runApp' | 'buildApp') {
-		this[item].update();
+		return this[item].update();
 	}
 }
 

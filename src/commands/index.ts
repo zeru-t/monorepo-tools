@@ -6,6 +6,7 @@ const commands = {
 	setApp: 'MonorepoTools.setApp',
 	runApp: 'MonorepoTools.runApp',
 	buildApp: 'MonorepoTools.buildApp',
+	refreshDependencies: 'MonorepoTools.refreshDependencies',
 
 	doNothing: 'MonorepoTools.clickPackageManager'
 };

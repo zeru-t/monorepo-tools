@@ -22,13 +22,16 @@ export async function activate(extensionContext: ExtensionContext) {
 
 	const appInfo = await AppInfo.create();
 
+	const dependencyTreeDataProvider = new DependencyTreeDataProvider(extensionContext, appInfo);
+
 	createCommands();
 
 	createCodeLenses(extensionContext, new AnnotationCommandsProvider(), new AnnotationProvider(updateAnnotationProvider));
 
 	const statusBar = new StatusBar(extensionContext, appInfo);
 
-	window.createTreeView('monorepo-tree', { treeDataProvider: new DependencyTreeDataProvider(appInfo) });
+	window.createTreeView('monorepo-dependencies', { treeDataProvider: dependencyTreeDataProvider });
+
 
 	function createCommands() {
 
@@ -38,6 +41,7 @@ export async function activate(extensionContext: ExtensionContext) {
 		createCommand(commands.setApp, setApp);
 		createCommand(commands.runApp, runScriptCommand('run'));
 		createCommand(commands.buildApp, runScriptCommand('build'));
+		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh());
 
 		createCommand(commands.doNothing, () => null);
 
@@ -75,6 +79,7 @@ export async function activate(extensionContext: ExtensionContext) {
 		async function setApp(newApp: string) {
 			await workspaceState.update('app', newApp);
 			await statusBar.updateAppStatusBarItems();
+			await dependencyTreeDataProvider.refresh()();
 		}
 
 		function runCommand(command: string) {

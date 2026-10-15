@@ -24,10 +24,26 @@
 		"views": {
 			"explorer": [
 				{
-					"id": "monorepo-tree",
+					"id": "monorepo-dependencies",
 					"name": "Monorepo Dependencies",
 					"icon": "",
 					"type": "tree"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "MonorepoTools.refreshDependencies",
+				"title": "Refresh Dependencies",
+				"icon": "$(refresh)"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "MonorepoTools.refreshDependencies",
+					"when": "view == monorepo-dependencies",
+					"group": "navigation"
 				}
 			]
 		},
