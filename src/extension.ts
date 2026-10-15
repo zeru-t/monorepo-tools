@@ -7,7 +7,7 @@ import { getSettings, updateSetting } from './settings';
 import { StatusBar } from './statusBar';
 import { DependencyTreeDataProvider } from './dependencies';
 import { AppInfo } from './appInfo';
-import './extensions/array';
+import './extensions';
 
 
 export async function activate(extensionContext: ExtensionContext) {
