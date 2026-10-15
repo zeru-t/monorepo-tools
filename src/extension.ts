@@ -7,19 +7,8 @@ import { getSettings, updateSetting } from './settings';
 import { StatusBar } from './statusBar';
 import { DependencyTreeDataProvider } from './dependencies';
 import { AppInfo } from './appInfo';
+import './extensions/array';
 
-
-declare global {
-	interface Array<T> {
-		unique(): Array<T>;
-	}
-}
-
-if (!Array.prototype.unique) {
-	Array.prototype.unique = function<T>(this: T[]): T[] {
-		return [...new Set(this)];
-	};
-}
 
 export async function activate(extensionContext: ExtensionContext) {
 
