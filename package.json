@@ -21,6 +21,16 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"views": {
+			"explorer": [
+				{
+					"id": "monorepo-tree",
+					"name": "Monorepo Dependencies",
+					"icon": "",
+					"type": "tree"
+				}
+			]
+		},
 		"configuration": [
 			{
 				"title": "Package Manager",
