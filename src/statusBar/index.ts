@@ -1,22 +1,19 @@
-import { MarkdownString, workspace, ExtensionContext } from 'vscode';
+import { ExtensionContext, MarkdownString, StatusBarAlignment, StatusBarItem as VSCodeStatusBarItem, window, workspace } from 'vscode';
 
 import { AppInfo } from '../appInfo';
 import { commands } from '../commands';
-import { appInfo, statusBarItemUpdate } from '../models';
+import { appInfo, statusBarItemUpdate, subscriptions, statusBarItemProps, updateStatusBarItem } from '../models';
 import { getSettings } from '../settings';
-
-import { StatusBarItem } from './item';
-import { StatusBarSpacer } from './spacer';
 
 
 class StatusBar {
 
-	public showTerminal: StatusBarItem;
-	public packageManager: StatusBarItem;
-	public installPackages: StatusBarItem;
-	public apps: StatusBarItem;
-	public runApp: StatusBarItem;
-	public buildApp: StatusBarItem;
+	private showTerminal: StatusBarItem;
+	private packageManager: StatusBarItem;
+	private installPackages: StatusBarItem;
+	private apps: StatusBarItem;
+	private runApp: StatusBarItem;
+	private buildApp: StatusBarItem;
 
 	constructor({ subscriptions, workspaceState }: ExtensionContext, { appInfo }: AppInfo) {
 
@@ -96,10 +93,71 @@ class StatusBar {
 	}
 
 	public updateAppStatusBarItems() {
-		this.apps.update();
-		this.runApp.update();
-		this.buildApp.update();
+		this.updateStatusBarItems('apps');
+		this.updateStatusBarItems('runApp');
+		this.updateStatusBarItems('buildApp');
+	}
+	public updateStatusBarItems(item: 'showTerminal' | 'packageManager' | 'installPackages' | 'apps' | 'runApp' | 'buildApp') {
+		this[item].update();
 	}
 }
+
+class StatusBarItem {
+
+	public statusBarItem: VSCodeStatusBarItem;
+	public updateStatusBarItem?: updateStatusBarItem;
+
+	constructor({ priority, text = '', icon, tooltip, command, updateStatusBarItem }: statusBarItemProps) {
+		this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 4000 - priority);
+
+		this.statusBarItem.name = 'Monorepo Tools';
+		this.statusBarItem.text = `${icon ? `$(${icon})` : ''}${text ? ` ${text}` : ''}`;
+		this.statusBarItem.tooltip = tooltip;
+
+		if (command)
+			this.statusBarItem.command = command;
+
+		if (priority < 4)
+			this.statusBarItem.color = '#d2b5dd';
+
+		this.updateStatusBarItem = updateStatusBarItem;
+
+		this.statusBarItem.show();
+	}
+
+	public initialize(subscriptions: subscriptions) {
+		subscriptions.push(this.statusBarItem);
+		this.update();
+	}
+
+	public async update() {
+		if (!this.updateStatusBarItem)
+			return;
+		const updateResponse = await this.updateStatusBarItem();
+		if (!updateResponse)
+			return;
+		const { text, icon, tooltip } = updateResponse;
+		if (text || icon) {
+			const regex = new RegExp(/^(\$\((.*)\)) (.*)$/);
+			const [currentIcon, currentText] = regex.exec(this.statusBarItem.text)!.slice(-2);
+			const newIcon = icon || currentIcon;
+			const newText = text || currentText;
+			this.statusBarItem.text = `${newIcon ? `$(${newIcon})` : ''} ${newText ? ` ${newText}` : ''}`;
+		}
+		if (tooltip)
+			this.statusBarItem.tooltip = tooltip;
+	}
+
+}
+
+class StatusBarSpacer {
+	constructor(subscriptions: subscriptions, priority: number, numSpaces = 1) {
+		for (let i = 0; i < numSpaces; i++) {
+			const spacer = new StatusBarItem({ text: ' ', priority });
+			spacer.initialize(subscriptions);
+		}
+	}
+}
+
 
 export { StatusBar };

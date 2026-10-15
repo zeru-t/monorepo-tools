@@ -1,12 +1,12 @@
 import { ExtensionContext, commands as VSCodeCommands, EventEmitter, QuickPickOptions, window, ShellExecution, TaskScope, Task, tasks, workspace } from 'vscode';
 
 import { AnnotationProvider, AnnotationCommandsProvider, createCodeLenses } from './annotations';
+import { AppInfo } from './appInfo';
 import { commands } from './commands';
+import { DependencyTreeDataProvider } from './dependencies';
 import { PackageMangerItems } from './packageManager';
 import { getSettings, updateSetting } from './settings';
 import { StatusBar } from './statusBar';
-import { DependencyTreeDataProvider } from './dependencies';
-import { AppInfo } from './appInfo';
 import './extensions';
 
 
@@ -69,7 +69,7 @@ export async function activate(extensionContext: ExtensionContext) {
 				return;
 
 			await updateSetting('packageManager', newPackageManager);
-			await statusBar.packageManager.update();
+			await statusBar.updateStatusBarItems('packageManager');
 		}
 
 		async function setApp(newApp: string) {
