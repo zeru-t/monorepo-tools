@@ -1,6 +1,6 @@
-interface Subscription {
+interface subscription {
 	dispose(): unknown;
 }
-type Subscriptions = Subscription[];
+type subscriptions = subscription[];
 
-export { Subscriptions };
+export { subscriptions };

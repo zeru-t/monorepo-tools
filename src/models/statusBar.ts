@@ -1,23 +1,23 @@
 import { MarkdownString } from 'vscode';
 
 
-type StatusBarItemTooltip = string | MarkdownString;
+type statusBarItemTooltip = string | MarkdownString;
 
-interface StatusBarItemUpdate {
+interface statusBarItemUpdate {
 	text?: string;
 	icon?: string;
-	tooltip?: StatusBarItemTooltip;
+	tooltip?: statusBarItemTooltip;
 }
 
-interface StatusBarItemProps {
+type updateStatusBarItem = () => statusBarItemUpdate | Promise<statusBarItemUpdate | undefined> | undefined;
+
+interface statusBarItemProps {
 	text?: string;
 	icon?: string;
-	tooltip?: StatusBarItemTooltip;
+	tooltip?: statusBarItemTooltip;
 	command?: string;
 	priority: number;
-	updateStatusBarItem?: UpdateStatusBarItem;
+	updateStatusBarItem?: updateStatusBarItem;
 }
 
-type UpdateStatusBarItem = () => StatusBarItemUpdate | Promise<StatusBarItemUpdate | undefined> | undefined;
-
-export { StatusBarItemProps, StatusBarItemTooltip, StatusBarItemUpdate, UpdateStatusBarItem };
+export { statusBarItemProps, statusBarItemTooltip, statusBarItemUpdate, updateStatusBarItem };

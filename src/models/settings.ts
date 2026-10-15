@@ -1,11 +1,11 @@
-type Annotation = Record<string, string>;
+type annotation = Record<string, string>;
 
-interface Settings {
-	annotations: Annotation;
+interface settings {
+	annotations: annotation;
 	hideAnnotations: boolean;
 	packageManager: string;
 	runScript: string;
 	buildScript: string;
 }
 
-export { Settings };
+export { settings };
