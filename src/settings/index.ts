@@ -1,6 +1,6 @@
 import { workspace } from 'vscode';
 
-import { Settings } from '../models';
+import { settings } from '../models';
 
 
 function getSettings() {
@@ -10,7 +10,7 @@ function getSettings() {
 		packageManager: getSetting('packageManager'),
 		runScript: getSetting('runScriptName'),
 		buildScript: getSetting('buildScriptName')
-	} as Settings;
+	} as settings;
 }
 
 function getSetting<T>(key: string) {

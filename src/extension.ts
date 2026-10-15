@@ -1,24 +1,45 @@
-import { ExtensionContext, commands as VSCodeCommands, EventEmitter, QuickPickOptions, window, ShellExecution, TaskScope, Task, tasks } from 'vscode';
+import { ExtensionContext, commands as VSCodeCommands, EventEmitter, QuickPickOptions, window, ShellExecution, TaskScope, Task, tasks, workspace } from 'vscode';
 
 import { AnnotationProvider, AnnotationCommandsProvider, createCodeLenses } from './annotations';
 import { commands } from './commands';
 import { PackageMangerItems } from './packageManager';
 import { getSettings, updateSetting } from './settings';
 import { StatusBar } from './statusBar';
+import { DependencyTreeDataProvider } from './dependencies';
+import { AppInfo } from './appInfo';
 
 
-export function activate(extensionContext: ExtensionContext) {
+declare global {
+	interface Array<T> {
+		unique(): Array<T>;
+	}
+}
+
+if (!Array.prototype.unique) {
+	Array.prototype.unique = function<T>(this: T[]): T[] {
+		return [...new Set(this)];
+	};
+}
+
+export async function activate(extensionContext: ExtensionContext) {
+
+	const root = workspace.workspaceFolders?.[0]?.uri.path;
+	if (!root)
+		return;
 
 	const { subscriptions, workspaceState } = extensionContext;
 
 	const updateAnnotationProvider = new EventEmitter<void>();
 
+	const appInfo = await AppInfo.create();
+
 	createCommands();
 
 	createCodeLenses(extensionContext, new AnnotationCommandsProvider(), new AnnotationProvider(updateAnnotationProvider));
 
-	const statusBar = new StatusBar(extensionContext);
+	const statusBar = new StatusBar(extensionContext, appInfo);
 
+	window.createTreeView('monorepo-tree', { treeDataProvider: new DependencyTreeDataProvider(appInfo) });
 
 	function createCommands() {
 

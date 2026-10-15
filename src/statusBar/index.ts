@@ -1,8 +1,10 @@
 import { MarkdownString, workspace, ExtensionContext } from 'vscode';
 
+import { AppInfo } from '../appInfo';
 import { commands } from '../commands';
-import { StatusBarItemUpdate } from '../models';
+import { appInfo, statusBarItemUpdate } from '../models';
 import { getSettings } from '../settings';
+
 import { StatusBarItem } from './item';
 import { StatusBarSpacer } from './spacer';
 
@@ -16,7 +18,7 @@ class StatusBar {
 	public runApp: StatusBarItem;
 	public buildApp: StatusBarItem;
 
-	constructor({ subscriptions, workspaceState }: ExtensionContext) {
+	constructor({ subscriptions, workspaceState }: ExtensionContext, { appInfo }: AppInfo) {
 
 		const currentApp = () => workspaceState.get<string>('app');
 
@@ -45,49 +47,32 @@ class StatusBar {
 
 		function updatePackageManagerStatusBarItem() {
 			const { packageManager } = getSettings();
-			return { text: packageManager ?? 'Select a Package Manager' } as StatusBarItemUpdate;
+			return { text: packageManager ?? 'Select a Package Manager' } as statusBarItemUpdate;
 		}
 		async function updateAppsStatusBarItem() {
 
-			const root = workspace.workspaceFolders?.[0]?.uri.path;
-			if (!root)
-				return;
-
-			const packageFiles = await workspace.findFiles('**/package.json', '{**/node_modules/**,**/.*}');
-			const apps = Object.entries(packageFiles
-				.map(file => file.path.replace(`${root}/`, '').replace(new RegExp('(/)?package.json', 'g'), ''))
-				.sort()
-				.reduce(reduceApps, {}));
+			const groupedAppInfo = Object.entries(Object.groupBy(appInfo, ({ folder }) => folder) as Record<string, appInfo[]>);
 
 			const tooltip = new MarkdownString('', true);
 			tooltip.supportHtml = true;
 			tooltip.isTrusted = true;
 
-			if (!apps.length) {
-				return { tooltip, text: workspace.name } as StatusBarItemUpdate;
+			if (!groupedAppInfo.length) {
+				return { tooltip, text: workspace.name } as statusBarItemUpdate;
 			}
 			else {
 				tooltip.appendMarkdown('<h1>Change Current App</h1>\n');
 				tooltip.appendMarkdown(`<h2><div>${workspace.name}/</div>`);
-				apps.forEach(updateTooltip);
+				groupedAppInfo.forEach(updateTooltip);
 				tooltip.appendMarkdown('</h2>');
 
-				return { tooltip, text: currentApp() ?? 'Select Current App' } as StatusBarItemUpdate;
+				return { tooltip, text: currentApp() ?? 'Select Current App' } as statusBarItemUpdate;
 			}
 
 
-			function reduceApps(allApps: Record<string, string[]>, app: string) {
-				const [folder, appName] = app.split('/');
-				if (allApps[folder])
-					allApps[folder] = [...allApps[folder], appName].sort();
-				else if (folder && appName)
-					allApps[folder] = [appName];
-				return allApps;
-			}
-
-			function updateTooltip([folder, apps]: [string, string[]]) {
+			function updateTooltip([folder, apps]: [string, appInfo[]]) {
 				tooltip.appendMarkdown(`&nbsp;&nbsp;- ${folder}/<br/>`);
-				apps.forEach((app, index) => {
+				apps.forEach(({ appName: app }, index) => {
 					const isLast = index === apps.length - 1;
 					const icon = isLast ? '└' : '├';
 					const appName = currentApp() == app ? `<b><i style="color:red">${app}/</i></b>` : `<a href='command:${commands.setApp}?"${app}"'>${app}/</a>`;
@@ -100,13 +85,13 @@ class StatusBar {
 			const tooltip = new MarkdownString(`Run <b><i>${currentApp() || workspace.name}</i></b>`, true);
 			tooltip.supportHtml = true;
 			tooltip.isTrusted = true;
-			return { tooltip } as StatusBarItemUpdate;
+			return { tooltip } as statusBarItemUpdate;
 		}
 		function updateBuildAppStatusBarItem() {
 			const tooltip = new MarkdownString(`Build <b><i>${currentApp() || workspace.name}</i></b>`, true);
 			tooltip.supportHtml = true;
 			tooltip.isTrusted = true;
-			return { tooltip } as StatusBarItemUpdate;
+			return { tooltip } as statusBarItemUpdate;
 		}
 	}
 

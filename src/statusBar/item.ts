@@ -1,14 +1,14 @@
 import { StatusBarAlignment, window, StatusBarItem as VSCodeStatusBarItem } from 'vscode';
 
-import { Subscriptions, StatusBarItemProps, UpdateStatusBarItem } from '../models';
+import { subscriptions, statusBarItemProps, updateStatusBarItem } from '../models';
 
 
 class StatusBarItem {
 
 	public statusBarItem: VSCodeStatusBarItem;
-	public updateStatusBarItem?: UpdateStatusBarItem;
+	public updateStatusBarItem?: updateStatusBarItem;
 
-	constructor({ priority, text = '', icon, tooltip, command, updateStatusBarItem }: StatusBarItemProps) {
+	constructor({ priority, text = '', icon, tooltip, command, updateStatusBarItem }: statusBarItemProps) {
 		this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 4000 - priority);
 
 		this.statusBarItem.name = 'Monorepo Tools';
@@ -26,7 +26,7 @@ class StatusBarItem {
 		this.statusBarItem.show();
 	}
 
-	public initialize(subscriptions: Subscriptions) {
+	public initialize(subscriptions: subscriptions) {
 		subscriptions.push(this.statusBarItem);
 		this.update();
 	}
