@@ -29,13 +29,13 @@ export async function activate(extensionContext: ExtensionContext) {
 
 	createCodeLenses(extensionContext, new AnnotationCommandsProvider(), new AnnotationProvider(updateAnnotationProvider));
 
-	const statusBar = new StatusBar(extensionContext, appInfo);
+	const statusBar = new StatusBar(extensionContext, appInfo.projects);
 
 	window.onDidChangeActiveTextEditor(async (textEditor?: TextEditor) => {
 		if (!textEditor)
 			return;
 		const { document } = textEditor;
-		const selectedApp = appInfo.appInfo.find(({ path }) => path === document.uri.fsPath);
+		const selectedApp = appInfo.projects.find(({ path }) => path === document.uri.fsPath);
 		if (!selectedApp)
 			return;
 		const treeItem = dependencyTreeDataProvider.TreeItems

@@ -1,4 +1,4 @@
-interface appInfo {
+interface project {
 	path: string;
 	folder: string;
 	appName: string;
@@ -7,4 +7,4 @@ interface appInfo {
 	devDependencies: string[];
 }
 
-export { appInfo };
+export { project };

@@ -1,7 +1,7 @@
-import { appInfo } from './appInfo';
+import { project } from './project';
 
 interface TreeItemProps {
-	appInfo: appInfo[];
+	projects: project[];
 	extensionPath: string;
 	label: string;
 	path?: string;

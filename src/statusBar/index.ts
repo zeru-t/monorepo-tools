@@ -1,8 +1,7 @@
 import { ExtensionContext, MarkdownString, StatusBarAlignment, StatusBarItem as VSCodeStatusBarItem, window, workspace } from 'vscode';
 
-import { AppInfo } from '../appInfo';
 import { commands } from '../commands';
-import { appInfo, statusBarItemUpdate, subscriptions, statusBarItemProps, updateStatusBarItem } from '../models';
+import { project, statusBarItemUpdate, subscriptions, statusBarItemProps, updateStatusBarItem } from '../models';
 import { getSettings } from '../settings';
 
 
@@ -15,7 +14,7 @@ class StatusBar {
 	private runApp: StatusBarItem;
 	private buildApp: StatusBarItem;
 
-	constructor({ subscriptions, workspaceState }: ExtensionContext, { appInfo }: AppInfo) {
+	constructor({ subscriptions, workspaceState }: ExtensionContext, projects: project[]) {
 
 		const currentApp = () => workspaceState.get<string>('app');
 
@@ -48,26 +47,26 @@ class StatusBar {
 		}
 		async function updateAppsStatusBarItem() {
 
-			const groupedAppInfo = Object.entries(Object.groupBy(appInfo, ({ folder }) => folder) as Record<string, appInfo[]>);
+			const groupedProjects = Object.entries(Object.groupBy(projects, ({ folder }) => folder) as Record<string, project[]>);
 
 			const tooltip = new MarkdownString('', true);
 			tooltip.supportHtml = true;
 			tooltip.isTrusted = true;
 
-			if (!groupedAppInfo.length) {
+			if (!groupedProjects.length) {
 				return { tooltip, text: workspace.name } as statusBarItemUpdate;
 			}
 			else {
 				tooltip.appendMarkdown('<h1>Change Current App</h1>\n');
 				tooltip.appendMarkdown(`<h2><div>${workspace.name}/</div>`);
-				groupedAppInfo.forEach(updateTooltip);
+				groupedProjects.forEach(updateTooltip);
 				tooltip.appendMarkdown('</h2>');
 
 				return { tooltip, text: currentApp() ?? 'Select Current App' } as statusBarItemUpdate;
 			}
 
 
-			function updateTooltip([folder, apps]: [string, appInfo[]]) {
+			function updateTooltip([folder, apps]: [string, project[]]) {
 				tooltip.appendMarkdown(`&nbsp;&nbsp;- ${folder}/<br/>`);
 				apps.forEach(({ appName: app }, index) => {
 					const isLast = index === apps.length - 1;

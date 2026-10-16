@@ -24,10 +24,10 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 	}
 
 	getTreeItems() {
-		return this._appInfo.appInfo
+		return this._appInfo.projects
 			.map(({ folder }) => folder)
 			.unique()
-			.map(folder => new TreeItem({ appInfo: this._appInfo.appInfo, extensionPath: this._extensionPath, label: folder, collapsible: true }));
+			.map(folder => new TreeItem({ projects: this._appInfo.projects, extensionPath: this._extensionPath, label: folder, collapsible: true }));
 	}
 
 	getTreeItem(element: TreeItem) {
@@ -58,7 +58,7 @@ class TreeItem extends VSCodeTreeItem {
 	public children?: TreeItem[];
 	public parent?: TreeItem;
 
-	constructor({ appInfo, extensionPath, label, path, collapsible, tooltip, icon, description }: TreeItemProps, parent?: TreeItem) {
+	constructor({ projects, extensionPath, label, path, collapsible, tooltip, icon, description }: TreeItemProps, parent?: TreeItem) {
 		super(label, collapsible ? TreeItemCollapsibleState.Collapsed : TreeItemCollapsibleState.None);
 
 		this.id = label;
@@ -77,14 +77,14 @@ class TreeItem extends VSCodeTreeItem {
 		this.children = [];
 		this.parent = parent;
 
-		const folderApps = appInfo.filter(({ folder }) => folder === label);
+		const folderApps = projects.filter(({ folder }) => folder === label);
 		if (folderApps.length) {
 			this.children = folderApps
 				.map(({ appName, path, dependencies, devDependencies }) => {
 					const allDependencies = [...dependencies, ...devDependencies];
 					const hasDeps = !!allDependencies.length;
 					return new TreeItem({
-						appInfo,
+						projects,
 						extensionPath,
 						path,
 						label: appName,
@@ -95,14 +95,14 @@ class TreeItem extends VSCodeTreeItem {
 				});
 		}
 
-		const app = appInfo.find(app => app.appName === label);
+		const app = projects.find(app => app.appName === label);
 		if (app) {
 			const { dependencies, devDependencies } = app;
 			this.children = [
 				...dependencies.map(dependency => {
-					const { appName } = appInfo.find(app => app.packageName === dependency)!;
+					const { appName } = projects.find(app => app.packageName === dependency)!;
 					return new TreeItem({
-						appInfo,
+						projects,
 						extensionPath,
 						label: appName,
 						tooltip: 'dependency',
@@ -110,9 +110,9 @@ class TreeItem extends VSCodeTreeItem {
 					}, this);
 				}),
 				...devDependencies.map(devDependency => {
-					const { appName } = appInfo.find(app => app.packageName === devDependency)!;
+					const { appName } = projects.find(app => app.packageName === devDependency)!;
 					return new TreeItem({
-						appInfo,
+						projects,
 						extensionPath,
 						label: appName,
 						tooltip: 'dev dependency',

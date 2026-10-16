@@ -1,27 +1,27 @@
 import { Uri, workspace, TextDocument as VSCodeTextDocument } from 'vscode';
-import { appInfo, packageFile } from '../models';
+import { project, packageFile } from '../models';
 import { readFileSync } from 'fs';
 
 
 class AppInfo {
 
-	public appInfo: appInfo[];
+	public projects: project[];
 
-	constructor(appInfo: appInfo[]) {
-		this.appInfo = appInfo;
+	constructor(projects: project[]) {
+		this.projects = projects;
 	}
 
 	public static async create() {
-		const appInfo = await getAppInfo();
-		return new AppInfo(appInfo);
+		const projects = await getProjects();
+		return new AppInfo(projects);
 	}
 
 	public async refresh() {
-		this.appInfo = await getAppInfo();
+		this.projects = await getProjects();
 	}
 }
 
-async function getAppInfo() {
+async function getProjects() {
 
 	const root = workspace.workspaceFolders![0].uri.path!;
 
@@ -44,7 +44,7 @@ async function getAppInfo() {
 	const isAppDependency = (dep: string) => packageNames.includes(dep);
 
 	return packagesFiles
-		.map<appInfo>(({ path, fsPath, name: packageName, dependencies, devDependencies }) => {
+		.map<project>(({ path, fsPath, name: packageName, dependencies, devDependencies }) => {
 			const regex = new RegExp('(/)?package.json', 'g');
 			const [folder, appName] = path.replace(`${root}/`, '').replace(regex, '').split('/');
 			return {
