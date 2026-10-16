@@ -34,7 +34,8 @@ async function getAppInfo() {
 				const docText = await doc.getText();
 				return {
 					...JSON.parse(docText),
-					path: doc.path
+					path: doc.path,
+					fsPath: uri.fsPath
 				} as packageFile;
 			})
 	);
@@ -43,10 +44,11 @@ async function getAppInfo() {
 	const isAppDependency = (dep: string) => packageNames.includes(dep);
 
 	return packagesFiles
-		.map<appInfo>(({ path, name: packageName, dependencies, devDependencies }) => {
+		.map<appInfo>(({ path, fsPath, name: packageName, dependencies, devDependencies }) => {
 			const regex = new RegExp('(/)?package.json', 'g');
 			const [folder, appName] = path.replace(`${root}/`, '').replace(regex, '').split('/');
 			return {
+				path: fsPath,
 				folder,
 				appName,
 				packageName,

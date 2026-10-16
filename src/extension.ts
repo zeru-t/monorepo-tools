@@ -1,9 +1,9 @@
-import { ExtensionContext, commands as VSCodeCommands, EventEmitter, QuickPickOptions, window, ShellExecution, TaskScope, Task, tasks, workspace } from 'vscode';
+import { ExtensionContext, commands as VSCodeCommands, EventEmitter, QuickPickOptions, window, ShellExecution, TaskScope, Task, tasks, workspace, Uri, TextEditor } from 'vscode';
 
 import { AnnotationProvider, AnnotationCommandsProvider, createCodeLenses } from './annotations';
 import { AppInfo } from './appInfo';
 import { commands } from './commands';
-import { DependencyTreeDataProvider } from './dependencies';
+import { DependencyTreeDataProvider, TreeItem } from './dependencies';
 import { PackageMangerItems } from './packageManager';
 import { getSettings, updateSetting } from './settings';
 import { StatusBar } from './statusBar';
@@ -23,6 +23,7 @@ export async function activate(extensionContext: ExtensionContext) {
 	const appInfo = await AppInfo.create();
 
 	const dependencyTreeDataProvider = new DependencyTreeDataProvider(extensionContext, appInfo);
+	const dependencyTree = window.createTreeView('monorepo-dependencies', { treeDataProvider: dependencyTreeDataProvider });
 
 	createCommands();
 
@@ -30,8 +31,20 @@ export async function activate(extensionContext: ExtensionContext) {
 
 	const statusBar = new StatusBar(extensionContext, appInfo);
 
-	window.createTreeView('monorepo-dependencies', { treeDataProvider: dependencyTreeDataProvider });
-
+	window.onDidChangeActiveTextEditor(async (textEditor?: TextEditor) => {
+		if (!textEditor)
+			return;
+		const { document } = textEditor;
+		const selectedApp = appInfo.appInfo.find(({ path }) => path === document.uri.fsPath);
+		if (!selectedApp)
+			return;
+		const treeItem = dependencyTreeDataProvider.TreeItems
+			.flatMap(item => item.children)
+			.find(item => item?.id === selectedApp.appName);
+		if (!treeItem)
+			return;
+		await dependencyTree.reveal(treeItem, { select: true });
+	});
 
 	function createCommands() {
 
@@ -42,6 +55,7 @@ export async function activate(extensionContext: ExtensionContext) {
 		createCommand(commands.runApp, runScriptCommand('run'));
 		createCommand(commands.buildApp, runScriptCommand('build'));
 		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh());
+		createCommand(commands.goToProject, ({ path }: TreeItem) => window.showTextDocument(Uri.file(path)));
 
 		createCommand(commands.doNothing, () => null);
 

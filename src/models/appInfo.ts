@@ -1,4 +1,5 @@
 interface appInfo {
+	path: string;
 	folder: string;
 	appName: string;
 	packageName: string;

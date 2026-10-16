@@ -26,7 +26,7 @@
 				{
 					"id": "monorepo-dependencies",
 					"name": "Monorepo Dependencies",
-					"icon": "",
+					"icon": "$(list-tree)",
 					"type": "tree"
 				}
 			]
@@ -36,6 +36,11 @@
 				"command": "MonorepoTools.refreshDependencies",
 				"title": "Refresh Dependencies",
 				"icon": "$(refresh)"
+			},
+			{
+				"command": "MonorepoTools.goToProject",
+				"title": "Go To Project",
+				"icon": "$(go-to-file)"
 			}
 		],
 		"menus": {
@@ -44,6 +49,13 @@
 					"command": "MonorepoTools.refreshDependencies",
 					"when": "view == monorepo-dependencies",
 					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "MonorepoTools.goToProject",
+					"when": "view == monorepo-dependencies && viewItem == project",
+					"group": "inline"
 				}
 			]
 		},
