@@ -12,7 +12,7 @@ class PackageMangerItem implements QuickPickItem {
 		this.label = ` ${name}`;
 		this.iconPath = Uri.file(`${extensionContext.extensionPath}/icons/${name}.png`);
 		if (name === packageManager)
-			this.description = '\t\t\t\t\t\t\t\t\t\t\t\t\t\t(currently selected)';
+			this.description = '\t(currently selected)';
 	}
 }
 

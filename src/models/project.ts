@@ -1,10 +1,12 @@
 interface project {
+	appName: string;
 	path: string;
 	folder: string;
-	appName: string;
 	packageName: string;
 	dependencies: string[];
 	devDependencies: string[];
 }
 
-export { project };
+type projects = project[];
+
+export { project, projects };

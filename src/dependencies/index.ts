@@ -1,8 +1,10 @@
 import { TreeItemCollapsibleState, TreeDataProvider, TreeItem as VSCodeTreeItem, EventEmitter, Event, ExtensionContext, Uri } from 'vscode';
 
 import { AppInfo } from '../appInfo';
-import { TreeItemProps } from '../models';
+import { Optional, TreeItemProps } from '../models';
 
+
+type ChangeTreeData = Optional<TreeItem>;
 
 class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 
@@ -23,26 +25,27 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 		this.onDidChangeTreeData = this._onDidChangeTreeData.event;
 	}
 
-	getTreeItems() {
+	public getTreeItems() {
 		return this._appInfo.projects
 			.map(({ folder }) => folder)
 			.unique()
 			.map(folder => new TreeItem({ projects: this._appInfo.projects, extensionPath: this._extensionPath, label: folder, collapsible: true }));
 	}
 
-	getTreeItem(element: TreeItem) {
+	public getTreeItem(element: TreeItem) {
 		return element;
 	}
 
-	getChildren(element?: TreeItem) {
+	public getChildren(element?: TreeItem) {
 		return element ? element.children : this.TreeItems;
 	}
 
-	getParent(element: TreeItem) {
+	public getParent(element: TreeItem) {
 		return element?.parent;
 	}
 
-	refresh() {
+	public refresh = this.refreshFn();
+	public refreshFn() {
 		return async () => {
 			await this._appInfo.refresh();
 			this.TreeItems = this.getTreeItems();
@@ -51,7 +54,6 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 	}
 }
 
-type ChangeTreeData = TreeItem | undefined | null | void;
 class TreeItem extends VSCodeTreeItem {
 	public id: string;
 	public path = '';
@@ -67,7 +69,6 @@ class TreeItem extends VSCodeTreeItem {
 		this.description = description;
 
 		this.iconPath = Uri.file(`${extensionPath}/icons/${icon ?? 'folder'}.svg`);
-
 
 		if (path) {
 			this.path = path;
