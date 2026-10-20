@@ -5,9 +5,9 @@ const commands = {
 	installPackage: 'MonorepoTools.installPackage',
 	installAllPackages: 'MonorepoTools.installAllPackages',
 	installProjectPackage: 'MonorepoTools.installProjectPackage',
-	setApp: 'MonorepoTools.setApp',
-	runApp: 'MonorepoTools.runApp',
-	buildApp: 'MonorepoTools.buildApp',
+	setProject: 'MonorepoTools.setProject',
+	runProject: 'MonorepoTools.runProject',
+	buildProjects: 'MonorepoTools.buildProjects',
 	refreshDependencies: 'MonorepoTools.refreshDependencies',
 	goToProject: 'MonorepoTools.goToProject',
 

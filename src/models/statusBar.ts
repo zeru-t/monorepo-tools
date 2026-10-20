@@ -8,6 +8,8 @@ interface statusBarItemUpdate {
 	text?: string;
 	icon?: string;
 	tooltip?: statusBarItemTooltip;
+	hide?: boolean;
+	show?: boolean;
 }
 
 type updateStatusBarItem = () => undefinable<statusBarItemUpdate | Promise<undefinable<statusBarItemUpdate>>>;

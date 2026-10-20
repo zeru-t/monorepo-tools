@@ -27,17 +27,17 @@ class ProjectQuickPickItem implements BaseQuickPickItem {
 	public active?: boolean;
 
 	constructor({ extensionPath, workspaceState }: ExtensionContext, project: project, root: boolean, id: number, last: boolean) {
-		const currentApp = workspaceState.get<string>('app');
+		const currentProject = workspaceState.get<string>('project');
 
-		const { appName } = this.project = project;
+		const { projectName } = this.project = project;
 
 		this.id = id;
-		this.label = `${root ? '' : `  ${last ? '└─' : '├─'}📁 `}${appName}`;
+		this.label = `${root ? '' : `  ${last ? '└─' : '├─'}📁 `}${projectName}`;
 
 		if (root)
 			this.iconPath = Uri.file(`${extensionPath}/icons/project.svg`);
 
-		if (currentApp === appName) {
+		if (currentProject === projectName) {
 			this.active = true;
 			this.description = '\t(active project)';
 		}
@@ -68,7 +68,7 @@ class ProjectQuickPickItems {
 		] as BaseQuickPickItem[];
 	}
 	public static createRoot(extensionContext: ExtensionContext) {
-		const rootProject = { appName: workspace.name! } as project;
+		const rootProject = { projectName: workspace.name! } as project;
 		return ProjectQuickPickItems.create(extensionContext, workspace.name!, [rootProject], true);
 	}
 }

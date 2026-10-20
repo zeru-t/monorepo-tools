@@ -1,5 +1,5 @@
 interface project {
-	appName: string;
+	projectName: string;
 	path: string;
 	folder: string;
 	packageName: string;

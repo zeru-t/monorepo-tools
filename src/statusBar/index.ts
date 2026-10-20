@@ -10,17 +10,17 @@ class StatusBar {
 	private showTerminal: StatusBarItem;
 	private packageManager: StatusBarItem;
 	private installPackage: StatusBarItem;
-	private apps: StatusBarItem;
-	private runApp: StatusBarItem;
-	private buildApp: StatusBarItem;
+	private projects: StatusBarItem;
+	private runProject: StatusBarItem;
+	private buildProjects: StatusBarItem;
 
 	constructor({ subscriptions, workspaceState }: ExtensionContext, projects: project[]) {
 
-		const currentApp = () => workspaceState.get<string>('app');
+		const currentProject = () => workspaceState.get<string>('project');
 
-		this.apps = new StatusBarItem({ text: currentApp() ?? 'Select Current App', icon: 'project', tooltip: 'Apps', updateStatusBarItem: updateAppsStatusBarItem, priority: 1 });
-		this.runApp = new StatusBarItem({ icon: 'run', tooltip: `Run ${currentApp() || workspace.name}`, command: commands.runApp, updateStatusBarItem: updateRunAppStatusBarItem, priority: 2 });
-		this.buildApp = new StatusBarItem({ icon: 'tools', tooltip: `Build ${currentApp() || workspace.name}`, command: commands.buildApp, updateStatusBarItem: updateBuildAppStatusBarItem, priority: 3 });
+		this.projects = new StatusBarItem({ text: currentProject() ?? 'Select Current Project', icon: 'project', tooltip: 'Projects', updateStatusBarItem: updateProjectsStatusBarItem, priority: 1 });
+		this.runProject = new StatusBarItem({ icon: 'run', tooltip: currentProject() ? `Run ${currentProject()}` : '', command: commands.runProject, updateStatusBarItem: updateRunProjectStatusBarItem, priority: 2 });
+		this.buildProjects = new StatusBarItem({ icon: 'tools', tooltip: 'Build All Projects', command: commands.buildProjects, priority: 3 });
 
 		new StatusBarSpacer(subscriptions, 4, 2);
 
@@ -33,9 +33,9 @@ class StatusBar {
 
 		new StatusBarSpacer(subscriptions, 9, 4);
 
-		this.apps.initialize(subscriptions);
-		this.runApp.initialize(subscriptions);
-		this.buildApp.initialize(subscriptions);
+		this.projects.initialize(subscriptions);
+		this.runProject.initialize(subscriptions);
+		this.buildProjects.initialize(subscriptions);
 		this.showTerminal.initialize(subscriptions);
 		this.packageManager.initialize(subscriptions);
 		this.installPackage.initialize(subscriptions);
@@ -45,7 +45,7 @@ class StatusBar {
 			const { packageManager } = getSettings();
 			return { text: packageManager ?? 'Select a Package Manager' } as statusBarItemUpdate;
 		}
-		async function updateAppsStatusBarItem() {
+		async function updateProjectsStatusBarItem() {
 
 			const groupedProjects = Object.entries(Object.groupBy(projects, ({ folder }) => folder) as Record<string, project[]>);
 
@@ -57,46 +57,41 @@ class StatusBar {
 				return { tooltip, text: workspace.name } as statusBarItemUpdate;
 			}
 			else {
-				tooltip.appendMarkdown('<h1>Change Current App</h1>\n');
+				tooltip.appendMarkdown(`<h1>${currentProject() ? 'Change Current Project' : 'Projects'}</h1>\n`);
 				tooltip.appendMarkdown(`<h2><div>${workspace.name}/</div>`);
 				groupedProjects.forEach(updateTooltip);
 				tooltip.appendMarkdown('</h2>');
 
-				return { tooltip, text: currentApp() ?? 'Select Current App' } as statusBarItemUpdate;
+				return { tooltip, text: currentProject() ?? 'Select a Project' } as statusBarItemUpdate;
 			}
 
 
-			function updateTooltip([folder, apps]: [string, project[]]) {
+			function updateTooltip([folder, projects]: [string, project[]]) {
 				tooltip.appendMarkdown(`&nbsp;&nbsp;- ${folder}/<br/>`);
-				apps.forEach(({ appName: app }, index) => {
-					const isLast = index === apps.length - 1;
+				projects.forEach(({ projectName }, index) => {
+					const isLast = index === projects.length - 1;
 					const icon = isLast ? '└' : '├';
-					const appName = currentApp() == app ? `<b><i style="color:red">${app}/</i></b>` : `<a href='command:${commands.setApp}?"${app}"'>${app}/</a>`;
-					tooltip.appendMarkdown(`&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${icon}─ ${appName}</br>`);
+					const project = currentProject() == projectName ? `<b><i style="color:red">${projectName}/</i></b>` : `<a href='command:${commands.setProject}?"${projectName}"'>${projectName}/</a>`;
+					tooltip.appendMarkdown(`&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${icon}─ ${project}</br>`);
 				});
 			}
 
 		}
-		function updateRunAppStatusBarItem() {
-			const tooltip = new MarkdownString(`Run <b><i>${currentApp() || workspace.name}</i></b>`, true);
+		function updateRunProjectStatusBarItem() {
+			if (!currentProject())
+				return { hide: true } as statusBarItemUpdate;
+			const tooltip = new MarkdownString(`Run <b><i>${currentProject()}</i></b>`, true);
 			tooltip.supportHtml = true;
 			tooltip.isTrusted = true;
-			return { tooltip } as statusBarItemUpdate;
-		}
-		function updateBuildAppStatusBarItem() {
-			const tooltip = new MarkdownString(`Build <b><i>${currentApp() || workspace.name}</i></b>`, true);
-			tooltip.supportHtml = true;
-			tooltip.isTrusted = true;
-			return { tooltip } as statusBarItemUpdate;
+			return { tooltip, show: true } as statusBarItemUpdate;
 		}
 	}
 
-	public async updateAppStatusBarItems() {
-		await this.updateStatusBarItems('apps');
-		await this.updateStatusBarItems('runApp');
-		await this.updateStatusBarItems('buildApp');
+	public async updateProjectStatusBarItems() {
+		await this.updateStatusBarItems('projects');
+		await this.updateStatusBarItems('runProject');
 	}
-	public updateStatusBarItems(item: 'showTerminal' | 'packageManager' | 'installPackage' | 'apps' | 'runApp' | 'buildApp') {
+	public updateStatusBarItems(item: 'showTerminal' | 'packageManager' | 'installPackage' | 'projects' | 'runProject' | 'buildProjects') {
 		return this[item].update();
 	}
 }
@@ -135,7 +130,11 @@ class StatusBarItem {
 		const updateResponse = await this.updateStatusBarItem();
 		if (!updateResponse)
 			return;
-		const { text, icon, tooltip } = updateResponse;
+		const { text, icon, tooltip, hide, show } = updateResponse;
+		if (hide)
+			this.statusBarItem.hide();
+		if (show)
+			this.statusBarItem.show();
 		if (text || icon) {
 			const regex = new RegExp(/^(\$\((.*)\)) (.*)$/);
 			const [currentIcon, currentText] = regex.exec(this.statusBarItem.text)!.slice(-2);

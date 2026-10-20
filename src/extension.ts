@@ -40,12 +40,12 @@ export async function activate(extensionContext: ExtensionContext) {
 		if (!textEditor)
 			return;
 		const { document } = textEditor;
-		const selectedApp = appInfo.projects.find(({ path }) => path === document.uri.fsPath);
-		if (!selectedApp)
+		const project = appInfo.projects.find(({ path }) => path === document.uri.fsPath);
+		if (!project)
 			return;
 		const treeItem = dependencyTreeDataProvider.TreeItems
 			.flatMap(item => item.children)
-			.find(item => item?.id === selectedApp.appName);
+			.find(item => item?.id === project.projectName);
 		if (!treeItem)
 			return;
 		await dependencyTree.reveal(treeItem, { select: true });
@@ -58,9 +58,9 @@ export async function activate(extensionContext: ExtensionContext) {
 		createCommand(commands.installPackage, installPackage);
 		createCommand(commands.installAllPackages, installAllPackages);
 		createCommand(commands.installProjectPackage, installProjectPackage);
-		createCommand(commands.setApp, setApp);
-		createCommand(commands.runApp, runScriptCommand('run'));
-		createCommand(commands.buildApp, runScriptCommand('build'));
+		createCommand(commands.setProject, setProject);
+		createCommand(commands.runProject, runScriptCommand('run'));
+		createCommand(commands.buildProjects, runScriptCommand('build'));
 		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh());
 		createCommand(commands.goToProject, goToProject);
 
@@ -125,13 +125,13 @@ export async function activate(extensionContext: ExtensionContext) {
 			picker.totalSteps = 2;
 			picker.step = 1;
 
-			const apps = [
+			const items = [
 				...ProjectQuickPickItems.createRoot(extensionContext),
 				...Object.entries(Object.groupBy(appInfo.projects, ({ folder }) => folder))
 					.flatMap(([folder, projects]) => ProjectQuickPickItems.create(extensionContext, folder, projects!))
 			];
-			picker.items = apps;
-			picker.activeItems = apps.filter(item => item.active);
+			picker.items = items;
+			picker.activeItems = items.filter(item => item.active);
 
 			picker.busy = false;
 			picker.enabled = true;
@@ -169,7 +169,7 @@ export async function activate(extensionContext: ExtensionContext) {
 				return;
 
 			picker.dispose();
-			runCommand(`install ${label}`, `./${project.folder}/${project.appName}`);
+			runCommand(`install ${label}`, `./${project.folder}/${project.projectName}`);
 		}
 		function installPackageInFolderFn(picker: QuickPick) {
 			return ([picked]: readonly ProjectQuickPickItem[]) => {
@@ -236,14 +236,14 @@ export async function activate(extensionContext: ExtensionContext) {
 
 			picker.project = project;
 			picker.step = QuickPickSteps.PackageSearch;
-			picker.placeholder = `Search for a package to install into '${project.appName}'`;
+			picker.placeholder = `Search for a package to install into '${project.projectName}'`;
 			picker.items = [];
 			picker.value = '';
 		}
 
-		async function setApp(newApp: string) {
-			await workspaceState.update('app', newApp);
-			await statusBar.updateAppStatusBarItems();
+		async function setProject(newProject: string) {
+			await workspaceState.update('project', newProject);
+			await statusBar.updateProjectStatusBarItems();
 		}
 
 		async function goToProject(treeItem: TreeItem) {
@@ -252,13 +252,18 @@ export async function activate(extensionContext: ExtensionContext) {
 		}
 
 		function runScriptCommand(commandName: 'run' | 'build') {
-			const appName = workspaceState.get<string>('app');
-			const settings = getSettings();
-			const command = settings[`${commandName}Script`];
-			return runCommandFn(`run ${appName ? `${command}:${appName}` : command}`);
+			return () => {
+				const projectName = workspaceState.get<string>('project');
+				const settings = getSettings();
+				const command = settings[`${commandName}Script`];
+				const isRunCommand = commandName === 'run';
+				if (isRunCommand && !projectName) {
+					return window.showWarningMessage('You must first select a project to run...');
+				}
+				return runCommand(`run ${isRunCommand ? `${command}:${projectName}` : command}`);
+			};
 		}
 
-		function runCommandFn(command: string) { return () => runCommand(command); }
 		function runCommand(command: string, directory?: string) {
 			const { packageManager } = getSettings();
 			if (!packageManager)

@@ -40,25 +40,25 @@ async function getProjects() {
 			})
 	);
 
-	const packageNames = packagesFiles.map(({ name }) => name);
-	const isAppDependency = (dep: string) => packageNames.includes(dep);
+	const projectNames = packagesFiles.map(({ name }) => name);
+	const isProjectDependency = (dependency: string) => projectNames.includes(dependency);
 
 	return packagesFiles
 		.map<project>(({ path, fsPath, name: packageName, dependencies, devDependencies }) => {
 			const regex = new RegExp('(/)?package.json', 'g');
-			const [folder, appName] = path.replace(`${root}/`, '').replace(regex, '').split('/');
+			const [folder, projectName] = path.replace(`${root}/`, '').replace(regex, '').split('/');
 			return {
 				path: fsPath,
 				folder,
-				appName,
+				projectName,
 				packageName,
-				dependencies: Object.keys(dependencies ?? {}).filter(isAppDependency),
-				devDependencies: Object.keys(devDependencies ?? {}).filter(isAppDependency)
+				dependencies: Object.keys(dependencies ?? {}).filter(isProjectDependency),
+				devDependencies: Object.keys(devDependencies ?? {}).filter(isProjectDependency)
 			};
 		})
 		.sort((a, b) => {
 			if (a.folder === b.folder)
-				return a.appName < b.appName ? -1 : 1;
+				return a.projectName < b.projectName ? -1 : 1;
 			return a.folder < b.folder ? -1 : 1;
 		});
 }

@@ -51,6 +51,11 @@
 				"command": "MonorepoTools.goToProject",
 				"title": "Go To Project",
 				"icon": "$(go-to-file)"
+			},
+			{
+				"command": "MonorepoTools.buildProjects",
+				"title": "Build Projects",
+				"icon": "$(tools)"
 			}
 		],
 		"menus": {
@@ -62,6 +67,11 @@
 				},
 				{
 					"command": "MonorepoTools.installAllPackages",
+					"when": "view == monorepo-dependencies",
+					"group": "navigation"
+				},
+				{
+					"command": "MonorepoTools.buildProjects",
 					"when": "view == monorepo-dependencies",
 					"group": "navigation"
 				}
