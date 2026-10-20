@@ -1,6 +1,6 @@
-type Undefinable<T> = T | undefined;
-type Nullable<T> = T | null;
-type Voidable<T> = T | void;
-type Optional<T> = Undefinable<Nullable<Voidable<T>>>;
+type undefinable<T> = T | undefined;
+type nullable<T> = T | null;
+type voidable<T> = T | void;
+type optional<T> = undefinable<nullable<voidable<T>>>;
 
-export { Undefinable, Nullable, Voidable, Optional };
+export { undefinable, nullable, voidable, optional };

@@ -1,5 +1,5 @@
 import { MarkdownString } from 'vscode';
-import { Undefinable } from './generics';
+import { undefinable } from './generics';
 
 
 type statusBarItemTooltip = string | MarkdownString;
@@ -10,7 +10,7 @@ interface statusBarItemUpdate {
 	tooltip?: statusBarItemTooltip;
 }
 
-type updateStatusBarItem = () => Undefinable<statusBarItemUpdate | Promise<Undefinable<statusBarItemUpdate>>>;
+type updateStatusBarItem = () => undefinable<statusBarItemUpdate | Promise<undefinable<statusBarItemUpdate>>>;
 
 interface statusBarItemProps {
 	text?: string;

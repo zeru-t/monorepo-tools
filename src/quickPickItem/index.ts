@@ -74,7 +74,7 @@ class ProjectQuickPickItems {
 }
 
 interface QuickPick extends VSCodeQuickPick<BaseQuickPickItem> {
-	project: string | undefined;
+	project: project;
 	debounce: QuickPickDebounce;
 }
 interface QuickPickDebounce {

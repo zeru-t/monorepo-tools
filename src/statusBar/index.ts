@@ -9,7 +9,7 @@ class StatusBar {
 
 	private showTerminal: StatusBarItem;
 	private packageManager: StatusBarItem;
-	private installPackages: StatusBarItem;
+	private installPackage: StatusBarItem;
 	private apps: StatusBarItem;
 	private runApp: StatusBarItem;
 	private buildApp: StatusBarItem;
@@ -25,7 +25,7 @@ class StatusBar {
 		new StatusBarSpacer(subscriptions, 4, 2);
 
 		this.packageManager = new StatusBarItem({ text: 'Switch Package Manger', icon: 'symbol-color', tooltip: 'Select a Package Manager', command: commands.changePackageManager, updateStatusBarItem: updatePackageManagerStatusBarItem, priority: 5 });
-		this.installPackages = new StatusBarItem({ text: 'Install Packages', icon: 'package', tooltip: 'Install All Packages', command: commands.installPackages, priority: 6 });
+		this.installPackage = new StatusBarItem({ text: 'Install Package', icon: 'package', tooltip: 'Install All Packages', command: commands.installPackage, priority: 6 });
 
 		new StatusBarSpacer(subscriptions, 7, 2);
 
@@ -38,7 +38,7 @@ class StatusBar {
 		this.buildApp.initialize(subscriptions);
 		this.showTerminal.initialize(subscriptions);
 		this.packageManager.initialize(subscriptions);
-		this.installPackages.initialize(subscriptions);
+		this.installPackage.initialize(subscriptions);
 
 
 		function updatePackageManagerStatusBarItem() {
@@ -96,7 +96,7 @@ class StatusBar {
 		await this.updateStatusBarItems('runApp');
 		await this.updateStatusBarItems('buildApp');
 	}
-	public updateStatusBarItems(item: 'showTerminal' | 'packageManager' | 'installPackages' | 'apps' | 'runApp' | 'buildApp') {
+	public updateStatusBarItems(item: 'showTerminal' | 'packageManager' | 'installPackage' | 'apps' | 'runApp' | 'buildApp') {
 		return this[item].update();
 	}
 }

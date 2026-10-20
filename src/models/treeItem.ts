@@ -1,6 +1,6 @@
 import { project } from './project';
 
-interface TreeItemProps {
+interface treeItemProps {
 	projects: project[];
 	extensionPath: string;
 	label: string;
@@ -10,6 +10,7 @@ interface TreeItemProps {
 	description?: string;
 	contextValue?: string;
 	icon?: string;
+	project?: project;
 }
 
-export { TreeItemProps };
+export { treeItemProps };

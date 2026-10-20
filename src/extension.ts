@@ -55,11 +55,13 @@ export async function activate(extensionContext: ExtensionContext) {
 
 		createCommand(commands.toggleHideAnnotations, toggleHideAnnotations);
 		createCommand(commands.changePackageManager, changePackageManager);
-		createCommand(commands.installPackages, installPackages);
+		createCommand(commands.installPackage, installPackage);
+		createCommand(commands.installAllPackages, installAllPackages);
+		createCommand(commands.installProjectPackage, installProjectPackage);
 		createCommand(commands.setApp, setApp);
 		createCommand(commands.runApp, runScriptCommand('run'));
 		createCommand(commands.buildApp, runScriptCommand('build'));
-		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refreshFn());
+		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh());
 		createCommand(commands.goToProject, goToProject);
 
 		createCommand(commands.doNothing, () => null);
@@ -95,7 +97,10 @@ export async function activate(extensionContext: ExtensionContext) {
 			await statusBar.updateStatusBarItems('packageManager');
 		}
 
-		async function installPackages() {
+		function installAllPackages() {
+			runCommand('install');
+		}
+		function installPackage() {
 			const picker = window.createQuickPick() as QuickPick;
 			picker.busy = true;
 			picker.enabled = false;
@@ -105,74 +110,16 @@ export async function activate(extensionContext: ExtensionContext) {
 			};
 
 			picker.onDidChangeSelection(([picked]: readonly ProjectQuickPickItem[]) => {
-				if (!picked)
-					return;
-
-				const { id, label, project } = picked;
-				if (picker.step === QuickPickSteps.ProjectSelection) {
-					if (!project)
-						return;
-
-					if (id === -1) {
-						picker.dispose();
-						runCommand('install');
-						return;
-					}
-
-					picker.project = project.appName;
-					picker.step = QuickPickSteps.PackageSearch;
-					picker.placeholder = `Search for a package to install into '${project.appName}'`;
-					picker.items = [];
-					picker.value = '';
-				}
-				else if (picker.step === QuickPickSteps.PackageSearch) {
-					if (!label || id === -1)
-						return;
-
-					picker.dispose();
-					runCommand(`install ${label}`, './apps/bump-version');
+				switch (picker.step) {
+					case QuickPickSteps.ProjectSelection:
+						handlePackageSelection(picker, picked);
+						break;
+					case QuickPickSteps.PackageSearch:
+						installPackageInFolder(picker, picked);
+						break;
 				}
 			});
-
-			picker.onDidChangeValue(text => {
-				if (picker.step !== QuickPickSteps.PackageSearch)
-					return;
-
-				picker.busy = true;
-				if (picker.debounce.timeout)
-					clearTimeout(picker.debounce.timeout);
-
-				if (!text) {
-					picker.items = [];
-					picker.busy = false;
-					picker.debounce.id = 0;
-					return;
-				}
-				else if (picker.debounce.id == 0) {
-					picker.items = [{
-						label: '$(search)',
-						description: 'searching...',
-						alwaysShow: true
-					}];
-				}
-
-				picker.debounce.timeout = setTimeout(async () => {
-					const id = ++picker.debounce.id;
-
-					const results = JSON.parse(execSync(`npm search '${text}' --json`).toString()) as packageSearchResult[];
-
-					if (id !== picker.debounce.id)
-						return;
-
-					if (!results.length)
-						picker.items = [{ id: -1, label: 'No results found!', detail: 'Try a different search term...', alwaysShow: true }];
-					else
-						picker.items = results.map<QuickPickItem>(result => new PackageQuickPickItem(result));
-
-					picker.busy = false;
-					picker.debounce.id = 0;
-				}, 500);
-			});
+			picker.onDidChangeValue(searchForPackageFn(picker));
 
 			picker.placeholder = 'Select a project to install package(s) into...';
 			picker.totalSteps = 2;
@@ -181,7 +128,7 @@ export async function activate(extensionContext: ExtensionContext) {
 			const apps = [
 				...ProjectQuickPickItems.createRoot(extensionContext),
 				...Object.entries(Object.groupBy(appInfo.projects, ({ folder }) => folder))
-					.flatMap(([folder, apps]) => ProjectQuickPickItems.create(extensionContext, folder, apps!))
+					.flatMap(([folder, projects]) => ProjectQuickPickItems.create(extensionContext, folder, projects!))
 			];
 			picker.items = apps;
 			picker.activeItems = apps.filter(item => item.active);
@@ -189,6 +136,109 @@ export async function activate(extensionContext: ExtensionContext) {
 			picker.busy = false;
 			picker.enabled = true;
 			picker.show();
+		}
+		function installProjectPackage(treeItem: TreeItem) {
+			const picker = window.createQuickPick() as QuickPick;
+			picker.busy = true;
+			picker.enabled = false;
+			picker.step = QuickPickSteps.PackageSearch;
+			picker.debounce = {
+				id: 0,
+				timeout: {} as NodeJS.Timeout
+			};
+
+			picker.onDidChangeSelection(installPackageInFolderFn(picker));
+			picker.onDidChangeValue(searchForPackageFn(picker));
+
+			picker.project = treeItem.project!;
+			picker.placeholder = `Search for a package to install into '${treeItem.label}'`;
+			picker.items = [];
+			picker.value = '';
+
+			picker.busy = false;
+			picker.enabled = true;
+			picker.show();
+		}
+		function installPackageInFolder(picker: QuickPick, picked?: PackageQuickPickItem) {
+			if (!picked)
+				return;
+
+			const { id, label } = picked;
+			const { project } = picker;
+			if (!label || !project || id === -1)
+				return;
+
+			picker.dispose();
+			runCommand(`install ${label}`, `./${project.folder}/${project.appName}`);
+		}
+		function installPackageInFolderFn(picker: QuickPick) {
+			return ([picked]: readonly ProjectQuickPickItem[]) => {
+				installPackageInFolder(picker, picked);
+			};
+		}
+		function searchForPackage(picker: QuickPick, text: string) {
+			if (picker.step !== QuickPickSteps.PackageSearch)
+				return;
+
+			picker.busy = true;
+			if (picker.debounce.timeout)
+				clearTimeout(picker.debounce.timeout);
+
+			if (!text) {
+				picker.items = [];
+				picker.busy = false;
+				picker.debounce.id = 0;
+				return;
+			}
+			else if (picker.debounce.id == 0) {
+				picker.items = [{
+					label: '$(search)',
+					description: 'searching...',
+					alwaysShow: true
+				}];
+			}
+
+			picker.debounce.timeout = setTimeout(async () => {
+				const id = ++picker.debounce.id;
+
+				const results = JSON.parse(execSync(`npm search '${text}' --json`).toString()) as packageSearchResult[];
+
+				if (id !== picker.debounce.id)
+					return;
+
+				if (!results.length)
+					picker.items = [{ id: -1, label: 'No results found!', detail: 'Try a different search term...', alwaysShow: true }];
+				else
+					picker.items = results.map<QuickPickItem>(result => new PackageQuickPickItem(result));
+
+				picker.busy = false;
+				picker.debounce.id = 0;
+			}, 500);
+		}
+		function searchForPackageFn(picker: QuickPick) {
+			return (text: string) => {
+				searchForPackage(picker, text);
+			};
+		}
+		function handlePackageSelection(picker: QuickPick, picked?: ProjectQuickPickItem) {
+			if (!picked)
+				return;
+
+			const { id, project } = picked;
+			if (!project)
+				return;
+
+			if (id === -1) {
+				picker.dispose();
+				installAllPackages();
+				return;
+			}
+
+			picker.project = project;
+			picker.step = QuickPickSteps.PackageSearch;
+			picker.placeholder = `Search for a package to install into '${project.appName}'`;
+			picker.items = [];
+			picker.value = '';
 		}
 
 		async function setApp(newApp: string) {
