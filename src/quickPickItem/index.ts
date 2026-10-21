@@ -34,8 +34,10 @@ class ProjectQuickPickItem implements BaseQuickPickItem {
 		this.id = id;
 		this.label = `${root ? '' : `  ${last ? '└─' : '├─'}📁 `}${projectName}`;
 
-		if (root)
+		if (root) {
 			this.iconPath = Uri.file(`${extensionPath}/icons/project.svg`);
+			this.description = 'Install All Packages';
+		}
 
 		if (currentProject === projectName) {
 			this.active = true;
@@ -61,15 +63,18 @@ class QuickPickItemSeparator implements BaseQuickPickItem {
 }
 
 class ProjectQuickPickItems {
-	public static create(extensionContext: ExtensionContext, folder: string, projects: projects, root = false) {
+	public static create(extensionContext: ExtensionContext, folder: string, projects: projects) {
 		return [
-			new QuickPickItemSeparator(root ? '🌐' : `🗃️ ${folder}`),
-			...projects.map((project, index) => new ProjectQuickPickItem(extensionContext, project, root, root ? -1 : index, index === projects.length - 1))
+			new QuickPickItemSeparator(`🗃️ ${folder}`),
+			...projects.map((project, index) => new ProjectQuickPickItem(extensionContext, project, false, index, index === projects.length - 1))
 		] as BaseQuickPickItem[];
 	}
 	public static createRoot(extensionContext: ExtensionContext) {
 		const rootProject = { projectName: workspace.name! } as project;
-		return ProjectQuickPickItems.create(extensionContext, workspace.name!, [rootProject], true);
+		return [
+			new QuickPickItemSeparator('🌐'),
+			new ProjectQuickPickItem(extensionContext, rootProject, true, -1, false)
+		] as BaseQuickPickItem[];
 	}
 }
 

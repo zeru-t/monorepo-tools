@@ -28,7 +28,7 @@ class StatusBar {
 		new StatusBarSpacer(subscriptions, 4, 2);
 
 		this.packageManager = new StatusBarItem({ text: 'Switch Package Manger', icon: 'symbol-color', tooltip: 'Select a Package Manager', command: commands.changePackageManager, updateStatusBarItem: updatePackageManagerStatusBarItem, priority: 5 });
-		this.installPackage = new StatusBarItem({ text: 'Install Package', icon: 'package', tooltip: 'Install All Packages', command: commands.installPackage, priority: 6 });
+		this.installPackage = new StatusBarItem({ text: 'Install Package', icon: 'package', tooltip: 'Install Packages', command: commands.installPackage, priority: 6 });
 
 		new StatusBarSpacer(subscriptions, 7, 2);
 

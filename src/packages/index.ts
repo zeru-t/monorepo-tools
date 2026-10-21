@@ -9,9 +9,12 @@ import { ProjectQuickPickItem, QuickPickSteps, ProjectQuickPickItems, PackageQui
 import { runTerminalCommand } from '../terminal';
 
 
+/** Install all workspace `Project` dependencies. */
 function installAllPackages() {
 	runTerminalCommand('install');
 }
+
+/** Open a QuickPick to select a `Project` and then search for a `Package` to install into it. */
 function installPackage(extensionContext: ExtensionContext, appInfo: AppInfo) {
 	const picker = window.createQuickPick() as QuickPick;
 	picker.busy = true;
@@ -35,7 +38,8 @@ function installPackage(extensionContext: ExtensionContext, appInfo: AppInfo) {
 
 	picker.placeholder = 'Select a project to install package(s) into...';
 	picker.totalSteps = 2;
-	picker.step = 1;
+	picker.step = QuickPickSteps.ProjectSelection;
+	picker.title = 'Install Package: Project Select';
 
 	const items = [
 		...ProjectQuickPickItems.createRoot(extensionContext),
@@ -49,11 +53,13 @@ function installPackage(extensionContext: ExtensionContext, appInfo: AppInfo) {
 	picker.enabled = true;
 	picker.show();
 }
+
+/** Open a QuickPick to search for a `Package` to install into the selected `Project`. */
 function installProjectPackage(treeItem: TreeItem) {
 	const picker = window.createQuickPick() as QuickPick;
 	picker.busy = true;
 	picker.enabled = false;
-	picker.step = QuickPickSteps.PackageSearch;
+	picker.title = `Install '${treeItem.name}' Package: Package Search`;
 	picker.debounce = {
 		id: 0,
 		timeout: {} as NodeJS.Timeout
@@ -91,7 +97,7 @@ function installPackageInFolderFn(picker: QuickPick) {
 }
 function searchForPackage(picker: QuickPick) {
 	return (text: string) => {
-		if (picker.step !== QuickPickSteps.PackageSearch)
+		if (picker.step === QuickPickSteps.ProjectSelection)
 			return;
 
 		picker.busy = true;
@@ -146,6 +152,7 @@ function showPackageSearch(picker: QuickPick, picked?: ProjectQuickPickItem) {
 
 	picker.project = project;
 	picker.step = QuickPickSteps.PackageSearch;
+	picker.title = 'Install Package: Package Search';
 	picker.placeholder = `Search for a package to install into '${project.projectName}'`;
 	picker.items = [];
 	picker.value = '';
