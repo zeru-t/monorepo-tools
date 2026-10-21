@@ -73,10 +73,31 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 			this._onDidChangeTreeData.fire();
 		};
 	}
+	public update(workspaceState: Memento) {
+		const currentProject = workspaceState.get<string>('project');
+
+		this.TreeItems.forEach(item => {
+			if (item.contextValue == 'folder' && item.children?.some(child => child.name === currentProject)) {
+				item.children.forEach(child => {
+					if (child.contextValue !== 'project' || child.name !== currentProject)
+						return;
+					child.label = { label: child.name, highlights: [[0, child.name.length]] };
+					this.updateItem(TreeItemCollapsibleState.Expanded)(child.parent!);
+				});
+				this.updateItem(TreeItemCollapsibleState.Expanded)(item);
+			}
+			else {
+				item.children?.forEach(child => {
+					child.label = child.name;
+				});
+			}
+		});
+		this._onDidChangeTreeData.fire();
+	}
 
 	public expandAll() {
 		return () => {
-			this.TreeItems.forEach(this.update(TreeItemCollapsibleState.Expanded));
+			this.TreeItems.forEach(this.updateItem(TreeItemCollapsibleState.Expanded));
 			this._onDidChangeTreeData.fire();
 		};
 	}
@@ -85,11 +106,11 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 			const project = workspaceState.get<string>('project');
 			this.TreeItems
 				.filter(treeItem => !treeItem.children?.some(c => c.name === project))
-				.forEach(this.update(TreeItemCollapsibleState.Collapsed));
+				.forEach(this.updateItem(TreeItemCollapsibleState.Collapsed));
 			this._onDidChangeTreeData.fire();
 		};
 	}
-	private update(state: TreeItemCollapsibleState) {
+	private updateItem(state: TreeItemCollapsibleState) {
 		return (treeItem: TreeItem) => {
 			treeItem.collapsibleState = state;
 			treeItem.id = `${treeItem.name}-${new Date().getTime()}`;

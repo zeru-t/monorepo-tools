@@ -6,7 +6,7 @@ import { commands, createCommandFn, setContext } from './commands';
 import { DependencyTree, DependencyTreeDataProvider, TreeItem } from './dependencyTree';
 import { installAllPackages, installPackage, installProjectPackage } from './packages';
 import { changePackageManager } from './packageManager';
-import { goToProject, setProject } from './projects';
+import { goToProject, selectProject, runProject } from './projects';
 import { StatusBar } from './statusBar';
 import { runScriptCommand } from './terminal';
 
@@ -62,18 +62,9 @@ export async function activate(extensionContext: ExtensionContext) {
 		createCommand(commands.installAllPackages, installAllPackages);
 		createCommand(commands.installProjectPackage, installProjectPackage);
 
-		createCommand(commands.setProject, (newProject: string) => {
-			setProject(workspaceState, statusBar, newProject);
-			//TODO: remove after removing Current Project status bar switcher (not needed since switching is done via tree)
-			dependencyTreeDataProvider.refresh(workspaceState)();
-		});
+		createCommand(commands.setProject, () => selectProject(extensionContext, statusBar, dependencyTreeDataProvider, appInfo));
 		createCommand(commands.goToProject, (treeItem: TreeItem) => goToProject(dependencyTree, treeItem));
-		createCommand(commands.runProject, (treeItem: TreeItem) => {
-			setProject(workspaceState, statusBar, treeItem.name);
-			runScriptCommand(workspaceState, 'run', treeItem);
-			//TODO: replace with function that only updates the tree item label highlighting
-			dependencyTreeDataProvider.refresh(workspaceState)();
-		});
+		createCommand(commands.runProject, (treeItem: TreeItem) => runProject(workspaceState, statusBar, dependencyTreeDataProvider, treeItem));
 		createCommand(commands.buildProjects, () => runScriptCommand(workspaceState, 'build'));
 
 		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh(workspaceState));

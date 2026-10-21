@@ -21,7 +21,7 @@ class StatusBar {
 
 		const currentProject = () => workspaceState.get<string>('project');
 
-		this.projects = new StatusBarItem({ text: currentProject() ?? 'Select Current Project', icon: 'project', tooltip: 'Projects', updateStatusBarItem: updateProjectsStatusBarItem, priority: 1 });
+		this.projects = new StatusBarItem({ text: currentProject() ?? 'Select Current Project', icon: 'project', command: commands.setProject, updateStatusBarItem: updateProjectsStatusBarItem, priority: 1 });
 		this.runProject = new StatusBarItem({ icon: 'run', tooltip: currentProject() ? `Run ${currentProject()}` : '', command: commands.runProject, updateStatusBarItem: updateRunProjectStatusBarItem, priority: 2 });
 		this.buildProjects = new StatusBarItem({ icon: 'tools', tooltip: 'Build All Projects', command: commands.buildProjects, priority: 3 });
 
@@ -41,6 +41,7 @@ class StatusBar {
 		this.runProject.initialize(subscriptions);
 		this.buildProjects.initialize(subscriptions);
 		this.showTerminal.initialize(subscriptions);
+		this.togglePanel.initialize(subscriptions);
 		this.packageManager.initialize(subscriptions);
 		this.installPackage.initialize(subscriptions);
 
@@ -50,36 +51,8 @@ class StatusBar {
 			return { text: packageManager ?? 'Select a Package Manager' } as statusBarItemUpdate;
 		}
 		function updateProjectsStatusBarItem() {
-
 			const groupedProjects = Object.entries(Object.groupBy(projects, ({ folder }) => folder) as Record<string, project[]>);
-
-			const tooltip = new MarkdownString('', true);
-			tooltip.supportHtml = true;
-			tooltip.isTrusted = true;
-
-			if (!groupedProjects.length) {
-				return { tooltip, text: workspace.name } as statusBarItemUpdate;
-			}
-			else {
-				tooltip.appendMarkdown(`<h1>${currentProject() ? 'Change Current Project' : 'Projects'}</h1>\n`);
-				tooltip.appendMarkdown(`<h2><div>${workspace.name}/</div>`);
-				groupedProjects.forEach(updateTooltip);
-				tooltip.appendMarkdown('</h2>');
-
-				return { tooltip, text: currentProject() ?? 'Select a Project' } as statusBarItemUpdate;
-			}
-
-
-			function updateTooltip([folder, projects]: [string, project[]]) {
-				tooltip.appendMarkdown(`&nbsp;&nbsp;- ${folder}/<br/>`);
-				projects.forEach(({ projectName }, index) => {
-					const isLast = index === projects.length - 1;
-					const icon = isLast ? '└' : '├';
-					const project = currentProject() == projectName ? `<b><i style="color:red">${projectName}/</i></b>` : `<a href='command:${commands.setProject}?"${projectName}"'>${projectName}/</a>`;
-					tooltip.appendMarkdown(`&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${icon}─ ${project}</br>`);
-				});
-			}
-
+			return { text: groupedProjects.length ? currentProject() ?? 'Select a Project' : workspace.name } as statusBarItemUpdate;
 		}
 		function updateRunProjectStatusBarItem() {
 			if (!currentProject())
