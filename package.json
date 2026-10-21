@@ -63,41 +63,36 @@
 				"icon": "$(run)"
 			},
 			{
-				"command": "MonorepoTools.collapseTree",
-				"title": "Collapse All",
-				"icon": "$(collapse-all)"
-			},
-			{
 				"command": "MonorepoTools.expandTree",
 				"title": "Expand All",
 				"icon": "$(expand-all)"
+			},
+			{
+				"command": "MonorepoTools.keepFolderOpen",
+				"title": "Keep Open",
+				"icon": "$(eye)"
 			}
 		],
 		"menus": {
 			"view/title": [
 				{
 					"command": "MonorepoTools.buildProjects",
-					"when": "view == monorepo-dependencies",
+					"when": "view == monorepo-dependencies && dependencyTreeLoaded",
 					"group": "navigation@1"
 				},
 				{
 					"command": "MonorepoTools.installAllPackages",
-					"when": "view == monorepo-dependencies",
+					"when": "view == monorepo-dependencies && dependencyTreeLoaded",
 					"group": "navigation@2"
 				},
 				{
 					"command": "MonorepoTools.refreshDependencies",
-					"when": "view == monorepo-dependencies",
+					"when": "view == monorepo-dependencies && dependencyTreeLoaded",
 					"group": "navigation@3"
 				},
 				{
-					"command": "MonorepoTools.collapseTree",
-					"when": "view == monorepo-dependencies",
-					"group": "navigation@4"
-				},
-				{
 					"command": "MonorepoTools.expandTree",
-					"when": "view == monorepo-dependencies",
+					"when": "view == monorepo-dependencies && dependencyTreeLoaded",
 					"group": "navigation@5"
 				}
 			],
@@ -116,6 +111,10 @@
 					"command": "MonorepoTools.goToProject",
 					"when": "view == monorepo-dependencies && viewItem == project",
 					"group": "inline@3"
+				},
+				{
+					"command": "MonorepoTools.keepFolderOpen",
+					"when": "view == monorepo-dependencies && viewItem == folder"
 				}
 			]
 		},

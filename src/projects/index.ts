@@ -1,6 +1,6 @@
-import { Memento, TreeView, Uri, window } from 'vscode';
+import { Memento, Uri, window } from 'vscode';
 
-import { TreeItem } from '../dependencyTree';
+import { DependencyTree, TreeItem } from '../dependencyTree';
 import { StatusBar } from '../statusBar';
 
 
@@ -9,8 +9,8 @@ async function setProject(workspaceState: Memento, statusBar: StatusBar, newProj
 	await statusBar.updateProjectStatusBarItems();
 }
 
-async function goToProject(dependencyTree: TreeView<TreeItem>, treeItem: TreeItem) {
-	await dependencyTree.reveal(treeItem, { select: true, focus: true });
+async function goToProject(dependencyTree: DependencyTree, treeItem: TreeItem) {
+	await dependencyTree.focusItem(treeItem);
 	await window.showTextDocument(Uri.file(treeItem.path));
 }
 

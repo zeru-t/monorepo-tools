@@ -2,8 +2,8 @@ import { EventEmitter, ExtensionContext, TextEditor, window, workspace } from 'v
 
 import { AnnotationProvider, AnnotationCommandsProvider, createCodeLenses, toggleHideAnnotations } from './annotations';
 import { AppInfo } from './appInfo';
-import { commands, createCommandFn } from './commands';
-import { DependencyTreeDataProvider, TreeItem } from './dependencyTree';
+import { commands, createCommandFn, setContext } from './commands';
+import { DependencyTree, DependencyTreeDataProvider, TreeItem } from './dependencyTree';
 import { installAllPackages, installPackage, installProjectPackage } from './packages';
 import { changePackageManager } from './packageManager';
 import { goToProject, setProject } from './projects';
@@ -25,7 +25,7 @@ export async function activate(extensionContext: ExtensionContext) {
 	const appInfo = await AppInfo.create();
 
 	const dependencyTreeDataProvider = new DependencyTreeDataProvider(extensionContext, appInfo);
-	const dependencyTree = window.createTreeView('monorepo-dependencies', { treeDataProvider: dependencyTreeDataProvider });
+	const dependencyTree = new DependencyTree(dependencyTreeDataProvider);
 
 	createCommands();
 
@@ -45,23 +45,31 @@ export async function activate(extensionContext: ExtensionContext) {
 			.find(item => item?.id === project.projectName);
 		if (!treeItem)
 			return;
-		await dependencyTree.reveal(treeItem, { select: true });
+		await dependencyTree.showItem(treeItem);
 	});
+
+	await setContext('dependencyTreeLoaded', true);
 
 	function createCommands() {
 
 		const createCommand = createCommandFn(subscriptions);
 
 		createCommand(commands.toggleHideAnnotations, () => toggleHideAnnotations(updateAnnotationProvider));
+
 		createCommand(commands.changePackageManager, () => changePackageManager(extensionContext, statusBar));
+
 		createCommand(commands.installPackage, () => installPackage(extensionContext, appInfo));
 		createCommand(commands.installAllPackages, installAllPackages);
 		createCommand(commands.installProjectPackage, installProjectPackage);
+
 		createCommand(commands.setProject, (newProject: string) => setProject(workspaceState, statusBar, newProject));
+		createCommand(commands.goToProject, (treeItem: TreeItem) => goToProject(dependencyTree, treeItem));
 		createCommand(commands.runProject, (treeItem: TreeItem) => runScriptCommand(workspaceState, 'run', treeItem));
 		createCommand(commands.buildProjects, () => runScriptCommand(workspaceState, 'build'));
+
 		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh());
-		createCommand(commands.goToProject, (treeItem: TreeItem) => goToProject(dependencyTree, treeItem));
+
+		createCommand(commands.expandTree, () => dependencyTreeDataProvider.expandAll(dependencyTree));
 
 		createCommand(commands.doNothing, () => null);
 	}

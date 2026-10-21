@@ -1,10 +1,33 @@
-import { TreeItemCollapsibleState, TreeDataProvider, TreeItem as VSCodeTreeItem, EventEmitter, Event, ExtensionContext, Uri } from 'vscode';
+import { TreeItemCollapsibleState, TreeDataProvider, TreeItem as VSCodeTreeItem, EventEmitter, Event, ExtensionContext, Uri, TreeView, window } from 'vscode';
 
 import { AppInfo } from '../appInfo';
 import { optional, project, treeItemProps } from '../models';
 
 
 type ChangeTreeData = optional<TreeItem>;
+
+
+class DependencyTree {
+
+	public Tree: TreeView<TreeItem>;
+
+	constructor(treeDataProvider: DependencyTreeDataProvider) {
+		this.Tree = window.createTreeView('monorepo-dependencies', { treeDataProvider, showCollapseAll: true });
+	}
+
+	public showItem(treeItem: TreeItem) {
+		return this.updateItem(treeItem, true);
+	}
+	public focusItem(treeItem: TreeItem) {
+		return this.updateItem(treeItem, true, true);
+	}
+	public expandItem(treeItem: TreeItem) {
+		return this.updateItem(treeItem, false, false, 1);
+	}
+	public updateItem(treeItem: TreeItem, select?: boolean, focus?: boolean, expand?: boolean | number) {
+		return this.Tree.reveal(treeItem, { expand, select, focus });
+	}
+}
 
 class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 
@@ -51,6 +74,19 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 			this._onDidChangeTreeData.fire();
 		};
 	}
+
+	public async expandAll(dependencyTree: DependencyTree) {
+		for (const treeItem of this.TreeItems)
+			await expand(dependencyTree, treeItem);
+		await dependencyTree.showItem(this.TreeItems[0]);
+
+		async function expand(dependencyTree: DependencyTree, treeItem: TreeItem) {
+			if (treeItem.collapsibleState === TreeItemCollapsibleState.None)
+				return;
+			await dependencyTree.expandItem(treeItem);
+		}
+	}
+
 }
 
 class TreeItem extends VSCodeTreeItem {
@@ -95,7 +131,6 @@ class TreeItem extends VSCodeTreeItem {
 						path,
 						label: projectName,
 						collapsible: hasDeps,
-						description: hasDeps ? undefined : 'n/a',
 						icon: 'project'
 					}, this);
 				});
@@ -130,4 +165,4 @@ class TreeItem extends VSCodeTreeItem {
 	}
 }
 
-export { DependencyTreeDataProvider, TreeItem };
+export { DependencyTree, DependencyTreeDataProvider, TreeItem };
