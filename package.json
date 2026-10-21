@@ -56,6 +56,11 @@
 				"command": "MonorepoTools.buildProjects",
 				"title": "Build Projects",
 				"icon": "$(tools)"
+			},
+			{
+				"command": "MonorepoTools.runProject",
+				"title": "Run Project",
+				"icon": "$(run)"
 			}
 		],
 		"menus": {
@@ -78,14 +83,19 @@
 			],
 			"view/item/context": [
 				{
-					"command": "MonorepoTools.installProjectPackage",
+					"command": "MonorepoTools.runProject",
 					"when": "view == monorepo-dependencies && viewItem == project",
 					"group": "inline@1"
 				},
 				{
-					"command": "MonorepoTools.goToProject",
+					"command": "MonorepoTools.installProjectPackage",
 					"when": "view == monorepo-dependencies && viewItem == project",
 					"group": "inline@2"
+				},
+				{
+					"command": "MonorepoTools.goToProject",
+					"when": "view == monorepo-dependencies && viewItem == project",
+					"group": "inline@3"
 				}
 			]
 		},
