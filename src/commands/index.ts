@@ -1,3 +1,8 @@
+import { subscriptions } from '../models';
+
+import { commands as VSCodeCommands } from 'vscode';
+
+
 const commands = {
 	showTerminal: 'workbench.action.terminal.focus',
 	toggleHideAnnotations: 'MonorepoTools.toggleHideAnnotations',
@@ -14,5 +19,12 @@ const commands = {
 	doNothing: 'MonorepoTools.clickPackageManager'
 };
 
+function createCommandFn(subscriptions: subscriptions) {
+	return async <T>(commandId: string, command: (args: T) => void) => {
+		const allCommands = await VSCodeCommands.getCommands();
+		if (!allCommands.includes(commandId))
+			subscriptions.push(VSCodeCommands.registerCommand(commandId, command));
+	};
+}
 
-export { commands };
+export { commands, createCommandFn };

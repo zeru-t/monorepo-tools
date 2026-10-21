@@ -1,6 +1,6 @@
 import { CodeLensProvider, Event, EventEmitter, TextDocument, CodeLens as VSCodeLens, ExtensionContext, languages, window } from 'vscode';
 
-import { getSettings } from '../settings';
+import { getSettings, updateSetting } from '../settings';
 
 
 class AnnotationProvider implements CodeLensProvider {
@@ -74,4 +74,10 @@ function createCodeLenses({ subscriptions }: ExtensionContext, ...providers: Cod
 	providers.forEach(provider => subscriptions.push(languages.registerCodeLensProvider({ language: 'json', pattern: '**/package.json' }, provider)));
 }
 
-export { AnnotationProvider, AnnotationCommandsProvider, createCodeLenses };
+async function toggleHideAnnotations(updateAnnotationProvider: EventEmitter<void>) {
+	const { hideAnnotations } = getSettings();
+	await updateSetting('hideAnnotations', !hideAnnotations);
+	updateAnnotationProvider.fire();
+}
+
+export { AnnotationProvider, AnnotationCommandsProvider, createCodeLenses, toggleHideAnnotations };

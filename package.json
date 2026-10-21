@@ -61,24 +61,44 @@
 				"command": "MonorepoTools.runProject",
 				"title": "Run Project",
 				"icon": "$(run)"
+			},
+			{
+				"command": "MonorepoTools.collapseTree",
+				"title": "Collapse All",
+				"icon": "$(collapse-all)"
+			},
+			{
+				"command": "MonorepoTools.expandTree",
+				"title": "Expand All",
+				"icon": "$(expand-all)"
 			}
 		],
 		"menus": {
 			"view/title": [
 				{
-					"command": "MonorepoTools.refreshDependencies",
+					"command": "MonorepoTools.buildProjects",
 					"when": "view == monorepo-dependencies",
-					"group": "navigation"
+					"group": "navigation@1"
 				},
 				{
 					"command": "MonorepoTools.installAllPackages",
 					"when": "view == monorepo-dependencies",
-					"group": "navigation"
+					"group": "navigation@2"
 				},
 				{
-					"command": "MonorepoTools.buildProjects",
+					"command": "MonorepoTools.refreshDependencies",
 					"when": "view == monorepo-dependencies",
-					"group": "navigation"
+					"group": "navigation@3"
+				},
+				{
+					"command": "MonorepoTools.collapseTree",
+					"when": "view == monorepo-dependencies",
+					"group": "navigation@4"
+				},
+				{
+					"command": "MonorepoTools.expandTree",
+					"when": "view == monorepo-dependencies",
+					"group": "navigation@5"
 				}
 			],
 			"view/item/context": [

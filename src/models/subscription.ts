@@ -1,6 +1,6 @@
-interface subscription {
-	dispose(): unknown;
-}
-type subscriptions = subscription[];
+import { ExtensionContext } from 'vscode';
+
+
+type subscriptions = ExtensionContext['subscriptions'];
 
 export { subscriptions };

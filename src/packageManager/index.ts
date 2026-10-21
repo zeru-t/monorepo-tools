@@ -1,6 +1,7 @@
-import { ExtensionContext, IconPath, QuickPickItem, Uri } from 'vscode';
+import { ExtensionContext, IconPath, QuickPickItem, QuickPickOptions, Uri, window } from 'vscode';
 
-import { getSettings } from '../settings';
+import { getSettings, updateSetting } from '../settings';
+import { StatusBar } from '../statusBar';
 
 
 class PackageMangerItem implements QuickPickItem {
@@ -28,4 +29,22 @@ class PackageMangerItems {
 	}
 }
 
-export { PackageMangerItems };
+async function changePackageManager(extensionContext: ExtensionContext, statusBar: StatusBar) {
+	const { items } = new PackageMangerItems(extensionContext);
+	const quickPickOptions = {
+		matchOnDescription: true,
+		matchOnDetail: true,
+		placeHolder: 'Select a Package Manager to switch to...'
+	} as QuickPickOptions;
+
+	const picked = await window.showQuickPick(items, quickPickOptions);
+
+	const newPackageManager = picked?.label.trim();
+	if (!newPackageManager)
+		return;
+
+	await updateSetting('packageManager', newPackageManager);
+	await statusBar.updateStatusBarItems('packageManager');
+}
+
+export { changePackageManager };
