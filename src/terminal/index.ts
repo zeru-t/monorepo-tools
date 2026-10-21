@@ -4,16 +4,14 @@ import { getSettings } from '../settings';
 
 
 function runScriptCommand(workspaceState: Memento, commandName: 'run' | 'build') {
-	return () => {
-		const projectName = workspaceState.get<string>('project');
-		const settings = getSettings();
-		const command = settings[`${commandName}Script`];
-		const isRunCommand = commandName === 'run';
-		if (isRunCommand && !projectName) {
-			return window.showWarningMessage('You must first select a project to run...');
-		}
-		return runTerminalCommand(`run ${isRunCommand ? `${command}:${projectName}` : command}`);
-	};
+	const projectName = workspaceState.get<string>('project');
+	const settings = getSettings();
+	const command = settings[`${commandName}Script`];
+	const isRunCommand = commandName === 'run';
+	if (isRunCommand && !projectName) {
+		return window.showWarningMessage('You must first select a project to run...');
+	}
+	return runTerminalCommand(`run ${isRunCommand ? `${command}:${projectName}` : command}`);
 }
 
 function runTerminalCommand(command: string, directory?: string) {
