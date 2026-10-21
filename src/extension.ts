@@ -58,7 +58,7 @@ export async function activate(extensionContext: ExtensionContext) {
 		createCommand(commands.installAllPackages, installAllPackages);
 		createCommand(commands.installProjectPackage, installProjectPackage);
 		createCommand(commands.setProject, (newProject: string) => setProject(workspaceState, statusBar, newProject));
-		createCommand(commands.runProject, () => runScriptCommand(workspaceState, 'run'));
+		createCommand(commands.runProject, (treeItem: TreeItem) => runScriptCommand(workspaceState, 'run', treeItem));
 		createCommand(commands.buildProjects, () => runScriptCommand(workspaceState, 'build'));
 		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh());
 		createCommand(commands.goToProject, (treeItem: TreeItem) => goToProject(dependencyTree, treeItem));
