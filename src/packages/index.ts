@@ -63,7 +63,7 @@ function installProjectPackage(treeItem: TreeItem) {
 	picker.onDidChangeValue(searchForPackage(picker));
 
 	picker.project = treeItem.project!;
-	picker.placeholder = `Search for a package to install into '${treeItem.label}'`;
+	picker.placeholder = `Search for a package to install into '${treeItem.name}'`;
 	picker.items = [];
 	picker.value = '';
 

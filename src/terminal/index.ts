@@ -5,7 +5,7 @@ import { getSettings } from '../settings';
 
 
 function runScriptCommand(workspaceState: Memento, commandName: 'run' | 'build', treeItem?: TreeItem) {
-	const projectName = treeItem?.id ?? workspaceState.get<string>('project');
+	const projectName = treeItem?.name ?? workspaceState.get<string>('project');
 	const settings = getSettings();
 	const command = settings[`${commandName}Script`];
 	const isRunCommand = commandName === 'run';

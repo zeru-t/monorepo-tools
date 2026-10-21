@@ -63,14 +63,19 @@
 				"icon": "$(run)"
 			},
 			{
+				"command": "MonorepoTools.setProject",
+				"title": "Set as Current Project",
+				"icon": "$(run)"
+			},
+			{
 				"command": "MonorepoTools.expandTree",
 				"title": "Expand All",
 				"icon": "$(expand-all)"
 			},
 			{
-				"command": "MonorepoTools.keepFolderOpen",
-				"title": "Keep Open",
-				"icon": "$(eye)"
+				"command": "MonorepoTools.collapseTree",
+				"title": "Collapse All",
+				"icon": "$(collapse-all)"
 			}
 		],
 		"menus": {
@@ -93,6 +98,11 @@
 				{
 					"command": "MonorepoTools.expandTree",
 					"when": "view == monorepo-dependencies && dependencyTreeLoaded",
+					"group": "navigation@4"
+				},
+				{
+					"command": "MonorepoTools.collapseTree",
+					"when": "view == monorepo-dependencies && dependencyTreeLoaded",
 					"group": "navigation@5"
 				}
 			],
@@ -111,10 +121,6 @@
 					"command": "MonorepoTools.goToProject",
 					"when": "view == monorepo-dependencies && viewItem == project",
 					"group": "inline@3"
-				},
-				{
-					"command": "MonorepoTools.keepFolderOpen",
-					"when": "view == monorepo-dependencies && viewItem == folder"
 				}
 			]
 		},

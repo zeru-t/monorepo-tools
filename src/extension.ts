@@ -42,7 +42,7 @@ export async function activate(extensionContext: ExtensionContext) {
 			return;
 		const treeItem = dependencyTreeDataProvider.TreeItems
 			.flatMap(item => item.children)
-			.find(item => item?.id === project.projectName);
+			.find(item => item?.name === project.projectName);
 		if (!treeItem)
 			return;
 		await dependencyTree.showItem(treeItem);
@@ -62,14 +62,24 @@ export async function activate(extensionContext: ExtensionContext) {
 		createCommand(commands.installAllPackages, installAllPackages);
 		createCommand(commands.installProjectPackage, installProjectPackage);
 
-		createCommand(commands.setProject, (newProject: string) => setProject(workspaceState, statusBar, newProject));
+		createCommand(commands.setProject, (newProject: string) => {
+			setProject(workspaceState, statusBar, newProject);
+			//TODO: remove after removing Current Project status bar switcher (not needed since switching is done via tree)
+			dependencyTreeDataProvider.refresh(workspaceState)();
+		});
 		createCommand(commands.goToProject, (treeItem: TreeItem) => goToProject(dependencyTree, treeItem));
-		createCommand(commands.runProject, (treeItem: TreeItem) => runScriptCommand(workspaceState, 'run', treeItem));
+		createCommand(commands.runProject, (treeItem: TreeItem) => {
+			setProject(workspaceState, statusBar, treeItem.name);
+			runScriptCommand(workspaceState, 'run', treeItem);
+			//TODO: replace with function that only updates the tree item label highlighting
+			dependencyTreeDataProvider.refresh(workspaceState)();
+		});
 		createCommand(commands.buildProjects, () => runScriptCommand(workspaceState, 'build'));
 
-		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh());
+		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh(workspaceState));
 
-		createCommand(commands.expandTree, () => dependencyTreeDataProvider.expandAll(dependencyTree));
+		createCommand(commands.expandTree, dependencyTreeDataProvider.expandAll());
+		createCommand(commands.collapseTree, dependencyTreeDataProvider.collapseAll(workspaceState));
 
 		createCommand(commands.doNothing, () => null);
 	}
