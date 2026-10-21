@@ -7,12 +7,15 @@ import { getSettings } from '../settings';
 
 class StatusBar {
 
-	private showTerminal: StatusBarItem;
-	private packageManager: StatusBarItem;
-	private installPackage: StatusBarItem;
 	private projects: StatusBarItem;
 	private runProject: StatusBarItem;
 	private buildProjects: StatusBarItem;
+
+	private packageManager: StatusBarItem;
+	private installPackage: StatusBarItem;
+
+	private showTerminal: StatusBarItem;
+	private togglePanel: StatusBarItem;
 
 	constructor({ subscriptions, workspaceState }: ExtensionContext, projects: project[]) {
 
@@ -30,8 +33,9 @@ class StatusBar {
 		new StatusBarSpacer(subscriptions, 7, 2);
 
 		this.showTerminal = new StatusBarItem({ text: 'Terminal', icon: 'terminal-cmd', tooltip: 'Show Terminal', command: commands.showTerminal, priority: 8 });
+		this.togglePanel = new StatusBarItem({ icon: 'layout-panel', tooltip: 'Toggle Bottom Panel', command: commands.togglePanel, priority: 9 });
 
-		new StatusBarSpacer(subscriptions, 9, 4);
+		new StatusBarSpacer(subscriptions, 10, 4);
 
 		this.projects.initialize(subscriptions);
 		this.runProject.initialize(subscriptions);
@@ -45,7 +49,7 @@ class StatusBar {
 			const { packageManager } = getSettings();
 			return { text: packageManager ?? 'Select a Package Manager' } as statusBarItemUpdate;
 		}
-		async function updateProjectsStatusBarItem() {
+		function updateProjectsStatusBarItem() {
 
 			const groupedProjects = Object.entries(Object.groupBy(projects, ({ folder }) => folder) as Record<string, project[]>);
 
@@ -87,9 +91,9 @@ class StatusBar {
 		}
 	}
 
-	public async updateProjectStatusBarItems() {
-		await this.updateStatusBarItems('projects');
-		await this.updateStatusBarItems('runProject');
+	public updateProjectStatusBarItems() {
+		this.updateStatusBarItems('projects');
+		this.updateStatusBarItems('runProject');
 	}
 	public updateStatusBarItems(item: 'showTerminal' | 'packageManager' | 'installPackage' | 'projects' | 'runProject' | 'buildProjects') {
 		return this[item].update();
@@ -124,10 +128,10 @@ class StatusBarItem {
 		this.update();
 	}
 
-	public async update() {
+	public update() {
 		if (!this.updateStatusBarItem)
 			return;
-		const updateResponse = await this.updateStatusBarItem();
+		const updateResponse = this.updateStatusBarItem();
 		if (!updateResponse)
 			return;
 		const { text, icon, tooltip, hide, show } = updateResponse;

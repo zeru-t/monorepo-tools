@@ -12,7 +12,7 @@ interface statusBarItemUpdate {
 	show?: boolean;
 }
 
-type updateStatusBarItem = () => undefinable<statusBarItemUpdate | Promise<undefinable<statusBarItemUpdate>>>;
+type updateStatusBarItem = () => undefinable<statusBarItemUpdate>;
 
 interface statusBarItemProps {
 	text?: string;

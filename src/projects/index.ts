@@ -6,7 +6,7 @@ import { StatusBar } from '../statusBar';
 
 async function setProject(workspaceState: Memento, statusBar: StatusBar, newProject: string) {
 	await workspaceState.update('project', newProject);
-	await statusBar.updateProjectStatusBarItems();
+	statusBar.updateProjectStatusBarItems();
 }
 
 async function goToProject(dependencyTree: DependencyTree, treeItem: TreeItem) {

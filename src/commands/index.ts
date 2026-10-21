@@ -8,6 +8,9 @@ const commands = {
 	/** Show Terminal window (Status Bar Item) */
 	showTerminal: 'workbench.action.terminal.focus' as const,
 
+	/** Toggle Bottom Panel (Status Bar Item) */
+	togglePanel: 'workbench.action.togglePanel' as const,
+
 	/** Show/Hide Annotations in _package.json_ file */
 	toggleHideAnnotations: 'MonorepoTools.toggleHideAnnotations' as const,
 
