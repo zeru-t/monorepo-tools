@@ -1,8 +1,7 @@
 import { ExtensionContext, IconPath, QuickPickItem, QuickPickItemKind, QuickPick as VSCodeQuickPick, Uri, workspace } from 'vscode';
 
-import { packageSearchResult, project, projects } from '../models';
+import { packageSearchResult, project, projects, undefinable } from '../models';
 
-import '../extensions';
 
 class BaseQuickPickItem implements QuickPickItem {
 	public label = '';
@@ -26,9 +25,7 @@ class ProjectQuickPickItem implements BaseQuickPickItem {
 	public project?: project;
 	public active?: boolean;
 
-	constructor({ extensionPath, workspaceState }: ExtensionContext, project: project, root: boolean, id: number, last: boolean, skipDescription = false) {
-		const currentProject = workspaceState.get<string>('project');
-
+	constructor(extensionPath: string, currentProject: undefinable<string>, project: project, root: boolean, id: number, last: boolean, skipDescription = false) {
 		const { projectName } = this.project = project;
 
 		this.id = id;
@@ -40,7 +37,7 @@ class ProjectQuickPickItem implements BaseQuickPickItem {
 				this.description = 'Install All Packages';
 		}
 
-		if (currentProject === projectName) {
+		if (projectName === currentProject) {
 			this.active = true;
 			this.description = '\t(active project)';
 		}
@@ -64,33 +61,33 @@ class QuickPickItemSeparator implements BaseQuickPickItem {
 }
 
 class ProjectQuickPickItems {
-	public static create(extensionContext: ExtensionContext, folder: string, projects: projects) {
+	public static create({ extensionPath }: ExtensionContext, currentProject: undefinable<string>, folder: string, projects: projects) {
 		return [
 			new QuickPickItemSeparator(`🗃️ ${folder}`),
-			...projects.map((project, index) => new ProjectQuickPickItem(extensionContext, project, false, index, index === projects.length - 1))
+			...projects.map((project, index) => new ProjectQuickPickItem(extensionPath, currentProject, project, false, index, index === projects.length - 1))
 		] as BaseQuickPickItem[];
 	}
-	public static createItems(extensionContext: ExtensionContext, projects: projects) {
+	public static createItems(extensionContext: ExtensionContext, currentProject: undefinable<string>, projects: projects) {
 		return [
-			...ProjectQuickPickItems.createRoot(extensionContext),
+			...ProjectQuickPickItems.createRoot(extensionContext, currentProject),
 			...Object.entries(Object.groupBy(projects, ({ folder }) => folder))
-				.flatMap(([folder, projects]) => ProjectQuickPickItems.create(extensionContext, folder, projects!))
+				.flatMap(([folder, projects]) => ProjectQuickPickItems.create(extensionContext, currentProject, folder, projects!))
 		] as BaseQuickPickItem[];
 	}
-	public static createRoot(extensionContext: ExtensionContext) {
+	public static createRoot(extensionContext: ExtensionContext, currentProject: undefinable<string>) {
 		const rootProject = { projectName: workspace.name! } as project;
 		return [
 			new QuickPickItemSeparator('🌐'),
-			new ProjectQuickPickItem(extensionContext, rootProject, true, -1, false)
+			new ProjectQuickPickItem(extensionContext.extensionPath, currentProject, rootProject, true, -1, false)
 		] as BaseQuickPickItem[];
 	}
-	public static createForSingleRepo(extensionContext: ExtensionContext) {
+	public static createForSingleRepo(extensionContext: ExtensionContext, currentProject: undefinable<string>) {
 		const workspaceName = workspace.name!;
 		return [
 			new QuickPickItemSeparator('🌐'),
-			new ProjectQuickPickItem(extensionContext, { projectName: 'Install All Packages' } as project, true, -1, false, true),
+			new ProjectQuickPickItem(extensionContext.extensionPath, currentProject, { projectName: 'Install All Packages' } as project, true, -1, false, true),
 			new QuickPickItemSeparator(`🗃️ ${workspaceName}`),
-			new ProjectQuickPickItem(extensionContext, { projectName: workspaceName } as project, true, 1, true, true)
+			new ProjectQuickPickItem(extensionContext.extensionPath, currentProject, { projectName: workspaceName } as project, true, 1, true, true)
 		] as BaseQuickPickItem[];
 	}
 }

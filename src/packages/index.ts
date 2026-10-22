@@ -4,7 +4,7 @@ import { window, QuickPickItem, ExtensionContext, Uri, workspace } from 'vscode'
 
 import { AppInfo } from '../appInfo';
 import { TreeItem } from '../dependencyTree';
-import { packageSearchResult } from '../models';
+import { packageSearchResult, undefinable } from '../models';
 import { ProjectQuickPickItem, QuickPickSteps, ProjectQuickPickItems, PackageQuickPickItem, QuickPick } from '../quickPickItem';
 import { runTerminalCommand } from '../terminal';
 
@@ -15,7 +15,7 @@ function installAllPackages() {
 }
 
 /** Open a QuickPick to select a `Project` and then search for a `Package` to install into it. */
-function installPackage(extensionContext: ExtensionContext, appInfo: AppInfo) {
+function installPackage(extensionContext: ExtensionContext, currentProject: undefinable<string>, appInfo: AppInfo) {
 
 	const picker = window.createQuickPick() as QuickPick;
 
@@ -47,8 +47,8 @@ function installPackage(extensionContext: ExtensionContext, appInfo: AppInfo) {
 	picker.title = 'Install Package: Project Select';
 
 	const items = appInfo.IsMonorepo ?
-		ProjectQuickPickItems.createItems(extensionContext, appInfo.projects) :
-		ProjectQuickPickItems.createForSingleRepo(extensionContext);
+		ProjectQuickPickItems.createItems(extensionContext, currentProject, appInfo.projects) :
+		ProjectQuickPickItems.createForSingleRepo(extensionContext, currentProject);
 	picker.items = items;
 
 	const activeItems = items.filter(item => item.active);

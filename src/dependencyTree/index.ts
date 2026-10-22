@@ -1,7 +1,7 @@
-import { TreeItemCollapsibleState, TreeDataProvider, TreeItem as VSCodeTreeItem, EventEmitter, Event, ExtensionContext, Uri, TreeView, window, Memento } from 'vscode';
+import { TreeItemCollapsibleState, TreeDataProvider, TreeItem as VSCodeTreeItem, EventEmitter, Event, ExtensionContext, Uri, TreeView, window } from 'vscode';
 
 import { AppInfo } from '../appInfo';
-import { optional, project, treeItemProps } from '../models';
+import { optional, project, treeItemProps, undefinable } from '../models';
 
 
 type ChangeTreeData = optional<TreeItem>;
@@ -38,20 +38,20 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 
 	readonly onDidChangeTreeData: Event<ChangeTreeData>;
 
-	constructor({ extensionPath, workspaceState }: ExtensionContext, appInfo: AppInfo) {
+	constructor({ extensionPath }: ExtensionContext, currentProject: undefinable<string>, appInfo: AppInfo) {
 		this._extensionPath = extensionPath;
 		this._appInfo = appInfo;
 
-		this.TreeItems = this.getTreeItems(workspaceState);
+		this.TreeItems = this.getTreeItems(currentProject);
 
 		this.onDidChangeTreeData = this._onDidChangeTreeData.event;
 	}
 
-	public getTreeItems(workspaceState: Memento) {
+	public getTreeItems(currentProject: undefinable<string>) {
 		return this._appInfo.projects
 			.map(({ folder }) => folder)
 			.unique()
-			.map(folder => new TreeItem(workspaceState, { projects: this._appInfo.projects, extensionPath: this._extensionPath, name: folder, context: 'folder', collapsible: true }));
+			.map(folder => new TreeItem(currentProject, { projects: this._appInfo.projects, extensionPath: this._extensionPath, name: folder, context: 'folder', collapsible: true }));
 	}
 
 	public getTreeItem(element: TreeItem) {
@@ -66,15 +66,12 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 		return element?.parent;
 	}
 
-	public refresh(workspaceState: Memento) {
-		return async () => {
-			await this._appInfo.refresh();
-			this.TreeItems = this.getTreeItems(workspaceState);
-			this._onDidChangeTreeData.fire();
-		};
+	public async refresh(currentProject: undefinable<string>) {
+		await this._appInfo.refresh();
+		this.TreeItems = this.getTreeItems(currentProject);
+		this._onDidChangeTreeData.fire();
 	}
-	public update(workspaceState: Memento) {
-		const currentProject = workspaceState.get<string>('project');
+	public update(currentProject: undefinable<string>) {
 
 		this.TreeItems.forEach(item => {
 			if (item.contextValue == 'folder' && item.children?.some(child => child.name === currentProject)) {
@@ -103,14 +100,11 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 			this._onDidChangeTreeData.fire();
 		};
 	}
-	public collapseAll(workspaceState: Memento) {
-		return () => {
-			const project = workspaceState.get<string>('project');
-			this.TreeItems
-				.filter(treeItem => !treeItem.children?.some(c => c.name === project))
-				.forEach(this.updateItem(TreeItemCollapsibleState.Collapsed));
-			this._onDidChangeTreeData.fire();
-		};
+	public collapseAll(currentProject: undefinable<string>) {
+		this.TreeItems
+			.filter(treeItem => !treeItem.children?.some(c => c.name === currentProject))
+			.forEach(this.updateItem(TreeItemCollapsibleState.Collapsed));
+		this._onDidChangeTreeData.fire();
 	}
 	private updateItem(state: TreeItemCollapsibleState) {
 		return (treeItem: TreeItem) => {
@@ -129,7 +123,7 @@ class TreeItem extends VSCodeTreeItem {
 	public name: string;
 	public project?: project;
 
-	constructor(workspaceState: Memento, { projects, extensionPath, name, path, collapsible, tooltip, icon, description, project, context }: treeItemProps, parent?: TreeItem) {
+	constructor(currentProject: undefinable<string>, { projects, extensionPath, name, path, collapsible, tooltip, icon, description, project, context }: treeItemProps, parent?: TreeItem) {
 		super(name, collapsible ? TreeItemCollapsibleState.Collapsed : TreeItemCollapsibleState.None);
 
 		this.id = `${name}-${new Date().getTime()}`;
@@ -158,7 +152,7 @@ class TreeItem extends VSCodeTreeItem {
 					const { projectName, path, dependencies, devDependencies } = project;
 					const allDependencies = [...dependencies, ...devDependencies];
 					const hasDeps = !!allDependencies.length;
-					return new TreeItem(workspaceState, {
+					return new TreeItem(currentProject, {
 						project,
 						projects,
 						extensionPath,
@@ -177,7 +171,7 @@ class TreeItem extends VSCodeTreeItem {
 			this.children = [
 				...dependencies.map(dependency => {
 					const { projectName } = projects.find(({ packageName }) => packageName === dependency)!;
-					return new TreeItem(workspaceState, {
+					return new TreeItem(currentProject, {
 						projects,
 						extensionPath,
 						name: projectName,
@@ -187,7 +181,7 @@ class TreeItem extends VSCodeTreeItem {
 				}),
 				...devDependencies.map(devDependency => {
 					const { projectName } = projects.find(({ packageName }) => packageName === devDependency)!;
-					return new TreeItem(workspaceState, {
+					return new TreeItem(currentProject, {
 						projects,
 						extensionPath,
 						name: projectName,
@@ -198,7 +192,6 @@ class TreeItem extends VSCodeTreeItem {
 			];
 		}
 
-		const currentProject = workspaceState.get<string>('project');
 		if (context == 'project' && this.name == currentProject)
 			this.label = { label: name, highlights: [[0, name.length]] };
 
