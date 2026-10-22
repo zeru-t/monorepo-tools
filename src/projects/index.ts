@@ -1,4 +1,4 @@
-import { ExtensionContext, Memento, Uri, window } from 'vscode';
+import { ExtensionContext, Memento, Uri, window, workspace } from 'vscode';
 
 import { AppInfo } from '../appInfo';
 import { DependencyTree, DependencyTreeDataProvider, TreeItem } from '../dependencyTree';
@@ -21,9 +21,11 @@ async function goToProject(dependencyTree: DependencyTree, treeItem: TreeItem) {
 }
 
 /** Call _run_ script for the selected `Project` in the `Dependency Tree` (will also update _project state variable_). */
-async function runProject(workspaceState: Memento, statusBar: StatusBar, dependencyTreeDataProvider: DependencyTreeDataProvider, treeItem: TreeItem) {
-	await setProject(workspaceState, statusBar, dependencyTreeDataProvider, treeItem.name);
-	await runScriptCommand(workspaceState, 'run', treeItem);
+async function runProject(workspaceState: Memento, statusBar: StatusBar, dependencyTreeDataProvider: DependencyTreeDataProvider, isMonorepo: boolean, treeItem: TreeItem) {
+	if (treeItem?.name)
+		await setProject(workspaceState, statusBar, dependencyTreeDataProvider, treeItem.name);
+	const projectName = isMonorepo ? treeItem?.name ?? workspaceState.get<string>('project') : workspace.name;
+	await runScriptCommand(workspaceState, 'run', `Run '${projectName}'`, isMonorepo, treeItem);
 }
 
 /** Open a QuickPick to select a `Project`. */

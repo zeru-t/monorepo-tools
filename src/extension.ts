@@ -31,7 +31,7 @@ export async function activate(extensionContext: ExtensionContext) {
 
 	createCodeLenses(extensionContext, new AnnotationCommandsProvider(), new AnnotationProvider(updateAnnotationProvider));
 
-	const statusBar = new StatusBar(extensionContext, appInfo.projects);
+	const statusBar = new StatusBar(extensionContext, appInfo);
 
 	window.onDidChangeActiveTextEditor(async (textEditor?: TextEditor) => {
 		if (!textEditor)
@@ -48,6 +48,10 @@ export async function activate(extensionContext: ExtensionContext) {
 		await dependencyTree.showItem(treeItem);
 	});
 
+	const isMonorepo = appInfo.IsMonorepo;
+	if (isMonorepo)
+		await setContext('showDependencyTree', true);
+
 	await setContext('dependencyTreeLoaded', true);
 
 	function createCommands() {
@@ -60,12 +64,12 @@ export async function activate(extensionContext: ExtensionContext) {
 
 		createCommand(commands.installPackage, () => installPackage(extensionContext, appInfo));
 		createCommand(commands.installAllPackages, installAllPackages);
-		createCommand(commands.installProjectPackage, installProjectPackage);
+		createCommand(commands.installProjectPackage, (treeItem: TreeItem) => installProjectPackage(extensionContext, appInfo, treeItem));
 
 		createCommand(commands.setProject, () => selectProject(extensionContext, statusBar, dependencyTreeDataProvider, appInfo));
 		createCommand(commands.goToProject, (treeItem: TreeItem) => goToProject(dependencyTree, treeItem));
-		createCommand(commands.runProject, (treeItem: TreeItem) => runProject(workspaceState, statusBar, dependencyTreeDataProvider, treeItem));
-		createCommand(commands.buildProjects, () => runScriptCommand(workspaceState, 'build'));
+		createCommand(commands.runProject, (treeItem: TreeItem) => runProject(workspaceState, statusBar, dependencyTreeDataProvider, isMonorepo, treeItem));
+		createCommand(commands.buildProjects, () => runScriptCommand(workspaceState, 'build', isMonorepo ? 'Build All Projects' : `Build '${workspace.name}'`, isMonorepo));
 
 		createCommand(commands.refreshDependencies, dependencyTreeDataProvider.refresh(workspaceState));
 

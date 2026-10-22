@@ -79,8 +79,10 @@ class DependencyTreeDataProvider implements TreeDataProvider<TreeItem> {
 		this.TreeItems.forEach(item => {
 			if (item.contextValue == 'folder' && item.children?.some(child => child.name === currentProject)) {
 				item.children.forEach(child => {
-					if (child.contextValue !== 'project' || child.name !== currentProject)
+					if (child.contextValue !== 'project' || child.name !== currentProject) {
+						child.label = child.name;
 						return;
+					}
 					child.label = { label: child.name, highlights: [[0, child.name.length]] };
 					this.updateItem(TreeItemCollapsibleState.Expanded)(child.parent!);
 				});

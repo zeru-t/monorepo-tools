@@ -25,17 +25,18 @@
 			"explorer": [
 				{
 					"id": "monorepo-dependencies",
-					"name": "Monorepo Dependencies",
+					"name": "Monorepo",
 					"icon": "$(list-tree)",
-					"type": "tree"
+					"type": "tree",
+					"when": "showDependencyTree"
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "MonorepoTools.refreshDependencies",
-				"title": "Refresh Dependencies",
-				"icon": "$(refresh)"
+				"command": "MonorepoTools.buildProjects",
+				"title": "Build Projects",
+				"icon": "$(tools)"
 			},
 			{
 				"command": "MonorepoTools.installAllPackages",
@@ -43,29 +44,9 @@
 				"icon": "$(package)"
 			},
 			{
-				"command": "MonorepoTools.installProjectPackage",
-				"title": "Install a Package into this project",
-				"icon": "$(package)"
-			},
-			{
-				"command": "MonorepoTools.goToProject",
-				"title": "Go To Project",
-				"icon": "$(go-to-file)"
-			},
-			{
-				"command": "MonorepoTools.buildProjects",
-				"title": "Build Projects",
-				"icon": "$(tools)"
-			},
-			{
-				"command": "MonorepoTools.runProject",
-				"title": "Run Project",
-				"icon": "$(run)"
-			},
-			{
-				"command": "MonorepoTools.setProject",
-				"title": "Set as Current Project",
-				"icon": "$(run)"
+				"command": "MonorepoTools.refreshDependencies",
+				"title": "Refresh",
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "MonorepoTools.expandTree",
@@ -76,6 +57,21 @@
 				"command": "MonorepoTools.collapseTree",
 				"title": "Collapse All",
 				"icon": "$(collapse-all)"
+			},
+			{
+				"command": "MonorepoTools.runProject",
+				"title": "Run Project",
+				"icon": "$(run)"
+			},
+			{
+				"command": "MonorepoTools.installProjectPackage",
+				"title": "Install a Package into this project",
+				"icon": "$(package)"
+			},
+			{
+				"command": "MonorepoTools.goToProject",
+				"title": "Go To Project",
+				"icon": "$(go-to-file)"
 			}
 		],
 		"menus": {

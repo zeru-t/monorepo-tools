@@ -1,5 +1,6 @@
 import { ExtensionContext, MarkdownString, StatusBarAlignment, StatusBarItem as VSCodeStatusBarItem, window, workspace } from 'vscode';
 
+import { AppInfo } from '../appInfo';
 import { commands } from '../commands';
 import { project, statusBarItemUpdate, subscriptions, statusBarItemProps, updateStatusBarItem } from '../models';
 import { getSettings } from '../settings';
@@ -17,13 +18,16 @@ class StatusBar {
 	private showTerminal: StatusBarItem;
 	private togglePanel: StatusBarItem;
 
-	constructor({ subscriptions, workspaceState }: ExtensionContext, projects: project[]) {
+	constructor({ subscriptions, workspaceState }: ExtensionContext, { projects, IsMonorepo }: AppInfo) {
 
 		const currentProject = () => workspaceState.get<string>('project');
 
+		const buildProjectsTooltip = new MarkdownString(`Build <b><i>${workspace.name}</i></b>`, true);
+		buildProjectsTooltip.supportHtml = true;
+		buildProjectsTooltip.isTrusted = true;
 		this.projects = new StatusBarItem({ text: currentProject() ?? 'Select Current Project', icon: 'project', command: commands.setProject, updateStatusBarItem: updateProjectsStatusBarItem, priority: 1 });
 		this.runProject = new StatusBarItem({ icon: 'run', tooltip: currentProject() ? `Run ${currentProject()}` : '', command: commands.runProject, updateStatusBarItem: updateRunProjectStatusBarItem, priority: 2 });
-		this.buildProjects = new StatusBarItem({ icon: 'tools', tooltip: 'Build All Projects', command: commands.buildProjects, priority: 3 });
+		this.buildProjects = new StatusBarItem({ icon: 'tools', tooltip: IsMonorepo ? 'Build All Projects' : buildProjectsTooltip, command: commands.buildProjects, priority: 3 });
 
 		new StatusBarSpacer(subscriptions, 4, 2);
 
@@ -51,13 +55,15 @@ class StatusBar {
 			return { text: packageManager ?? 'Select a Package Manager' } as statusBarItemUpdate;
 		}
 		function updateProjectsStatusBarItem() {
+			if (!IsMonorepo)
+				return { hide: true } as statusBarItemUpdate;
 			const groupedProjects = Object.entries(Object.groupBy(projects, ({ folder }) => folder) as Record<string, project[]>);
 			return { text: groupedProjects.length ? currentProject() ?? 'Select a Project' : workspace.name } as statusBarItemUpdate;
 		}
 		function updateRunProjectStatusBarItem() {
-			if (!currentProject())
+			if (IsMonorepo && !currentProject())
 				return { hide: true } as statusBarItemUpdate;
-			const tooltip = new MarkdownString(`Run <b><i>${currentProject()}</i></b>`, true);
+			const tooltip = new MarkdownString(`Run <b><i>${IsMonorepo ? currentProject() : workspace.name}</i></b>`, true);
 			tooltip.supportHtml = true;
 			tooltip.isTrusted = true;
 			return { tooltip, show: true } as statusBarItemUpdate;

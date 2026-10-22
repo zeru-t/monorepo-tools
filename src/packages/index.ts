@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 
-import { window, QuickPickItem, ExtensionContext } from 'vscode';
+import { window, QuickPickItem, ExtensionContext, Uri, workspace } from 'vscode';
 
 import { AppInfo } from '../appInfo';
 import { TreeItem } from '../dependencyTree';
@@ -11,12 +11,14 @@ import { runTerminalCommand } from '../terminal';
 
 /** Install all workspace `Project` dependencies. */
 function installAllPackages() {
-	runTerminalCommand('install');
+	runTerminalCommand('install', 'Install All Packages');
 }
 
 /** Open a QuickPick to select a `Project` and then search for a `Package` to install into it. */
 function installPackage(extensionContext: ExtensionContext, appInfo: AppInfo) {
+
 	const picker = window.createQuickPick() as QuickPick;
+
 	picker.busy = true;
 	picker.enabled = false;
 	picker.debounce = {
@@ -30,24 +32,27 @@ function installPackage(extensionContext: ExtensionContext, appInfo: AppInfo) {
 				showPackageSearch(picker, picked);
 				break;
 			case QuickPickSteps.PackageSearch:
-				installPackageInFolder(picker, picked);
+				showInstallTypeSelector(picker, extensionContext.extensionPath, picked);
+				break;
+			case QuickPickSteps.InstallTypeSelection:
+				installPackageInFolder(picker, appInfo.IsMonorepo, picked);
 				break;
 		}
 	});
 	picker.onDidChangeValue(searchForPackage(picker));
 
 	picker.placeholder = 'Select a project to install package(s) into...';
-	picker.totalSteps = 2;
+	picker.totalSteps = 3;
 	picker.step = QuickPickSteps.ProjectSelection;
 	picker.title = 'Install Package: Project Select';
 
-	const items = [
-		...ProjectQuickPickItems.createRoot(extensionContext),
-		...Object.entries(Object.groupBy(appInfo.projects, ({ folder }) => folder))
-			.flatMap(([folder, projects]) => ProjectQuickPickItems.create(extensionContext, folder, projects!))
-	];
+	const items = appInfo.IsMonorepo ?
+		ProjectQuickPickItems.createItems(extensionContext, appInfo.projects) :
+		ProjectQuickPickItems.createForSingleRepo(extensionContext);
 	picker.items = items;
-	picker.activeItems = items.filter(item => item.active);
+
+	const activeItems = items.filter(item => item.active);
+	picker.activeItems = activeItems.length ? activeItems : [items.last()!];
 
 	picker.busy = false;
 	picker.enabled = true;
@@ -55,7 +60,7 @@ function installPackage(extensionContext: ExtensionContext, appInfo: AppInfo) {
 }
 
 /** Open a QuickPick to search for a `Package` to install into the selected `Project`. */
-function installProjectPackage(treeItem: TreeItem) {
+function installProjectPackage(extensionContext: ExtensionContext, appInfo: AppInfo, treeItem: TreeItem) {
 	const picker = window.createQuickPick() as QuickPick;
 	picker.busy = true;
 	picker.enabled = false;
@@ -65,9 +70,20 @@ function installProjectPackage(treeItem: TreeItem) {
 		timeout: {} as NodeJS.Timeout
 	};
 
-	picker.onDidChangeSelection(installPackageInFolderFn(picker));
+	picker.onDidChangeSelection(([picked]: readonly ProjectQuickPickItem[]) => {
+		switch (picker.step) {
+			case QuickPickSteps.PackageSearch:
+				showInstallTypeSelector(picker, extensionContext.extensionPath, picked);
+				break;
+			case QuickPickSteps.InstallTypeSelection:
+				installPackageInFolder(picker, appInfo.IsMonorepo, picked);
+				break;
+		}
+	});
 	picker.onDidChangeValue(searchForPackage(picker));
 
+	picker.totalSteps = 3;
+	picker.step = QuickPickSteps.PackageSearch;
 	picker.project = treeItem.project!;
 	picker.placeholder = `Search for a package to install into '${treeItem.name}'`;
 	picker.items = [];
@@ -78,26 +94,23 @@ function installProjectPackage(treeItem: TreeItem) {
 	picker.show();
 }
 
-function installPackageInFolder(picker: QuickPick, picked?: PackageQuickPickItem) {
+function installPackageInFolder(picker: QuickPick, isMonorepo: boolean, picked?: PackageQuickPickItem) {
 	if (!picked)
 		return;
 
 	const { id, label } = picked;
-	const { project } = picker;
+	const { project, packageName } = picker;
 	if (!label || !project || id === -1)
 		return;
 
+	const isDevDependency = label === 'devDependency';
 	picker.dispose();
-	runTerminalCommand(`install ${label}`, `./${project.folder}/${project.projectName}`);
-}
-function installPackageInFolderFn(picker: QuickPick) {
-	return ([picked]: readonly ProjectQuickPickItem[]) => {
-		installPackageInFolder(picker, picked);
-	};
+	const title = `Install '${packageName}' into '${project.packageName ?? workspace.name}' (${isDevDependency ? 'devDependency' : 'dependency'})`;
+	runTerminalCommand(`install ${packageName}${isDevDependency ? ' -D' : ''}`, title, isMonorepo ? `./${project.folder}/${project.projectName}` : undefined);
 }
 function searchForPackage(picker: QuickPick) {
 	return (text: string) => {
-		if (picker.step === QuickPickSteps.ProjectSelection)
+		if (picker.step === QuickPickSteps.ProjectSelection || picker.step === QuickPickSteps.InstallTypeSelection)
 			return;
 
 		picker.busy = true;
@@ -112,6 +125,7 @@ function searchForPackage(picker: QuickPick) {
 		}
 		else if (picker.debounce.id == 0) {
 			picker.items = [{
+				id: -1,
 				label: '$(search)',
 				description: 'searching...',
 				alwaysShow: true
@@ -155,6 +169,20 @@ function showPackageSearch(picker: QuickPick, picked?: ProjectQuickPickItem) {
 	picker.title = 'Install Package: Package Search';
 	picker.placeholder = `Search for a package to install into '${project.projectName}'`;
 	picker.items = [];
+	picker.value = '';
+}
+function showInstallTypeSelector(picker: QuickPick, extensionPath: string, picked?: ProjectQuickPickItem) {
+	if (!picked || picked.id === -1)
+		return;
+
+	picker.packageName = picked.label;
+	picker.step = QuickPickSteps.InstallTypeSelection;
+	picker.title = 'Install Package: Install Type';
+	picker.placeholder = 'Select an install type...';
+	picker.items = [
+		{ label: 'dependency', description: 'install as a dependency', iconPath: Uri.file(`${extensionPath}/icons/dependency.svg`) },
+		{ label: 'devDependency', description: 'install as a devDependency', iconPath: Uri.file(`${extensionPath}/icons/devDependency.svg`) }
+	];
 	picker.value = '';
 }
 

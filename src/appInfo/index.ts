@@ -7,6 +7,8 @@ class AppInfo {
 
 	public projects: project[];
 
+	public get IsMonorepo() { return this.projects.length > 1; }
+
 	constructor(projects: project[]) {
 		this.projects = projects;
 	}
