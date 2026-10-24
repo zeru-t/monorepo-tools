@@ -251,7 +251,7 @@ Monorepo Tools is a VS Code extension that adds a suite of tools to help manage 
 
 
 <h2 id="changelog">Changelog</h2>
-<p>See [CHANGELOG](CHANGELOG.md) for more information.</p>
+See [CHANGELOG](CHANGELOG.md) for more information.
 
 
 <h2 id="related">Related</h2>
