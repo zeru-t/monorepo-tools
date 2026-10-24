@@ -54,10 +54,7 @@ Monorepo Tools is a VS Code extension that adds a suite of tools to help manage 
 			</li>
 		</ol>
 		<div style="margin-left: 1rem">
-			Both buttons will run the following command:
-			<code>
-				<a href="#package-manager-setting">[PACKAGE MANGER]</a> run <a href="#build-script-name-setting">[BUILD SCRIPT]</a>
-			</code>
+			Both buttons will run the following command: <code><a href="#package-manager-setting">[PACKAGE MANGER]</a> run <a href="#build-script-name-setting">[BUILD SCRIPT]</a></code>
 			<blockquote>
 				<h4>
 					Note: To run this command, the root <i>package.json</i> file needs a script with the same name as the <a href="#build-script-name-setting">BUILD SCRIPT</a> setting.
@@ -79,11 +76,7 @@ Monorepo Tools is a VS Code extension that adds a suite of tools to help manage 
 			</li>
 		</ol>
 		<div style="margin-left: 1rem">
-			Both buttons will run the following command:
-			<code>
-				<a href="#package-manager-setting">[PACKAGE MANGER]</a> run
-				<a href="#run-script-name-setting">[RUN SCRIPT]</a>:[PROJECT]
-			</code>
+			Both buttons will run the following command: <code><a href="#package-manager-setting">[PACKAGE MANGER]</a> run <a href="#run-script-name-setting">[RUN SCRIPT]</a>:[PROJECT]</code>
 			<blockquote>
 				<h4>
 					Note: To run this command, the root <i>package.json</i> file needs a script with the same name as the <a href="#run-script-name-setting">RUN SCRIPT</a> setting.
