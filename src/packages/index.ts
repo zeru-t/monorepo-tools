@@ -52,7 +52,7 @@ function installPackage(extensionContext: ExtensionContext, currentProject: unde
 	picker.items = items;
 
 	const activeItems = items.filter(item => item.active);
-	picker.activeItems = activeItems.length ? activeItems : [items.last()!];
+	picker.activeItems = activeItems.length ? activeItems : [items.first()!];
 
 	picker.busy = false;
 	picker.enabled = true;

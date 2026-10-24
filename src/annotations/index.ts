@@ -65,7 +65,7 @@ class AnnotationCommandsProvider implements CodeLensProvider {
 class CodeLens extends VSCodeLens {
 	constructor(lineNumber: number, title: string, tooltipText = '', command = '', ...args: string[]) {
 		const { range } = window.activeTextEditor!.document.lineAt(lineNumber);
-		const tooltip = `Click here to ${tooltipText} annotations`;
+		const tooltip = command ? `Click here to ${tooltipText} annotations` : undefined;
 		super(range, { title, tooltip, command, arguments: args });
 	}
 }
